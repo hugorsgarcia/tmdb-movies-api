@@ -2,11 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Image from 'next/image';
 import { Movie } from '@/types/movie';
 import StarRating from '@/components/StarRating';
 import styles from './page.module.css';
 
-const MovieDetailsPage = ({ params }: { params: { id: string } }) => {
+interface PageProps {
+  params: { id: string };
+}
+
+const MovieDetailsPage = ({ params }: PageProps) => {
   const [movie, setMovie] = useState<Movie | null>(null);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,8 +34,14 @@ const MovieDetailsPage = ({ params }: { params: { id: string } }) => {
           },
         });
 
-        const officialTrailer = videosResponse.data.results.find(
-          (video: any) => video.type === 'Trailer' && video.site === 'YouTube'
+        interface VideoResult {
+          type: string;
+          site: string;
+          key: string;
+        }
+
+        const officialTrailer = (videosResponse.data.results as VideoResult[]).find(
+          (video) => video.type === 'Trailer' && video.site === 'YouTube'
         );
 
         setTrailerKey(officialTrailer?.key || null);
@@ -61,10 +72,13 @@ const MovieDetailsPage = ({ params }: { params: { id: string } }) => {
       ></div>
 
       <div className={styles.content}>
-        <img 
+        <Image 
           src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
           alt={movie.title} 
+          width={250}
+          height={375}
           className={styles.poster}
+          priority
         />
         <div className={styles.details}>
           <h1 className={styles.title}>{movie.title}</h1>
@@ -103,7 +117,7 @@ const MovieDetailsPage = ({ params }: { params: { id: string } }) => {
             <iframe
               src={`https://www.youtube.com/embed/${trailerKey}`}
               title="YouTube video player"
-              frameBorder="0"
+              style={{ border: 0 }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>

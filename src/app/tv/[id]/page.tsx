@@ -2,11 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Image from 'next/image';
 import StarRating from '@/components/StarRating';
 import { MediaItem } from '@/types/media';
 import styles from './page.module.css';
 
-const TvDetailsPage = ({ params }: { params: { id: string } }) => {
+interface PageProps {
+  params: { id: string };
+}
+
+const TvDetailsPage = ({ params }: PageProps) => {
   const [tv, setTv] = useState<MediaItem | null>(null);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,7 +58,7 @@ const TvDetailsPage = ({ params }: { params: { id: string } }) => {
     return `${hours}h ${mins}m`;
   };
 
-  const title = tv.name;
+  const title = tv.name ?? 'Título não disponível';
   const year = tv.first_air_date ? new Date(tv.first_air_date).getFullYear() : '';
 
   const runtime = tv.episode_run_time && tv.episode_run_time.length > 0 ? tv.episode_run_time[0] : null;
@@ -66,10 +71,13 @@ const TvDetailsPage = ({ params }: { params: { id: string } }) => {
       ></div>
 
       <div className={styles.content}>
-        <img 
+        <Image 
           src={`https://image.tmdb.org/t/p/w500${tv.poster_path}`} 
           alt={title}
+          width={250}
+          height={375}
           className={styles.poster}
+          priority
         />
         <div className={styles.details}>
           <h1 className={styles.title}>{title}</h1>
@@ -86,7 +94,7 @@ const TvDetailsPage = ({ params }: { params: { id: string } }) => {
           </div>
 
           <div className={styles.genres}>
-            {tv.genres.map((genre: any) => (
+            {tv.genres.map((genre) => (
               <span key={genre.id} className={styles.genre}>{genre.name}</span>
             ))}
           </div>
@@ -108,7 +116,7 @@ const TvDetailsPage = ({ params }: { params: { id: string } }) => {
             <iframe
               src={`https://www.youtube.com/embed/${trailerKey}`}
               title="YouTube video player"
-              frameBorder="0"
+              style={{ border: 0 }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
