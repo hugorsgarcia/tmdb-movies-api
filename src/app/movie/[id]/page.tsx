@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
 import { Movie } from '@/types/movie';
@@ -8,10 +8,11 @@ import StarRating from '@/components/StarRating';
 import styles from './page.module.css';
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const MovieDetailsPage = ({ params }: PageProps) => {
+  const { id } = use(params);
   const [movie, setMovie] = useState<Movie | null>(null);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +20,7 @@ const MovieDetailsPage = ({ params }: PageProps) => {
   useEffect(() => {
     const getMovieDetails = async () => {
       try {
-        const movieResponse = await axios.get(`https://api.themoviedb.org/3/movie/${params.id}`, {
+        const movieResponse = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
           params: {
             api_key: 'acc2bc295985c96b273c383bf2c6e62a',
             language: 'pt-BR',
@@ -27,7 +28,7 @@ const MovieDetailsPage = ({ params }: PageProps) => {
         });
         setMovie(movieResponse.data);
 
-        const videosResponse = await axios.get(`https://api.themoviedb.org/3/movie/${params.id}/videos`, {
+        const videosResponse = await axios.get(`https://api.themoviedb.org/3/movie/${id}/videos`, {
           params: {
             api_key: 'acc2bc295985c96b273c383bf2c6e62a',
             language: 'en-US', 
@@ -52,7 +53,7 @@ const MovieDetailsPage = ({ params }: PageProps) => {
     };
 
     getMovieDetails();
-  }, [params.id]);
+  }, [id]);
 
   if (!movie) {
     return <div>Loading...</div>;

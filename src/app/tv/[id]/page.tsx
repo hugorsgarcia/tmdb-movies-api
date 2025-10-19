@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
 import StarRating from '@/components/StarRating';
@@ -8,10 +8,11 @@ import { MediaItem } from '@/types/media';
 import styles from './page.module.css';
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 const TvDetailsPage = ({ params }: PageProps) => {
+  const { id } = use(params);
   const [tv, setTv] = useState<MediaItem | null>(null);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +20,7 @@ const TvDetailsPage = ({ params }: PageProps) => {
   useEffect(() => {
     const getTvDetails = async () => {
       try {
-        const tvResponse = await axios.get(`https://api.themoviedb.org/3/tv/${params.id}`, {
+        const tvResponse = await axios.get(`https://api.themoviedb.org/3/tv/${id}`, {
           params: {
             api_key: 'acc2bc295985c96b273c383bf2c6e62a',
             language: 'pt-BR',
@@ -27,7 +28,7 @@ const TvDetailsPage = ({ params }: PageProps) => {
         });
         setTv(tvResponse.data);
 
-        const videosResponse = await axios.get(`https://api.themoviedb.org/3/tv/${params.id}/videos`, {
+        const videosResponse = await axios.get(`https://api.themoviedb.org/3/tv/${id}/videos`, {
           params: {
             api_key: 'acc2bc295985c96b273c383bf2c6e62a',
             language: 'en-US',
@@ -46,7 +47,7 @@ const TvDetailsPage = ({ params }: PageProps) => {
     };
 
     getTvDetails();
-  }, [params.id]);
+  }, [id]);
 
   if (!tv) {
     return <div>Loading...</div>;
