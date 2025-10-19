@@ -1,9 +1,33 @@
 .movie-list {
-    display:grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); // 2 colunas no mobile por padrão
+    gap: 12px;
     list-style: none;
     width: 100%;
+    padding: 0 12px;
+
+    // Tablets pequenos (a partir de 480px)
+    @media (min-width: 480px) {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+    }
+
+    // Tablets (a partir de 768px)
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        padding: 0 16px;
+    }
+
+    // Desktop pequeno (a partir de 1024px)
+    @media (min-width: 1024px) {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    // Desktop grande (a partir de 1440px)
+    @media (min-width: 1440px) {
+        grid-template-columns: repeat(6, 1fr);
+    }
 }
 
 .loading-indicator,
