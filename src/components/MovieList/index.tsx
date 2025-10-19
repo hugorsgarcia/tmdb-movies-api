@@ -79,7 +79,7 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
         <div>
             <ul className="movie-list">
                 {mediaItems.filter(item => item && item.poster_path).map((item, index) => {
-                    const key = `${item.id}-${selectedGenre ?? 'all'}-${mediaType}`;
+                    const key = `${item.id}-${selectedGenre ?? 'all'}-${mediaType}-${index}`;
                     const movieProps: Movie = {
                         id: item.id,
                         title: item.title ?? item.name ?? '',
