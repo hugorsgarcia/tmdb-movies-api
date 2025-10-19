@@ -1,4 +1,5 @@
 import { Movie } from "@/types/movie";
+import './index.scss';
 import StarRating from "../StarRating";
 import Link from "next/link";
 import Image from "next/image";

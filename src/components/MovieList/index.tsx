@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from "react";
+import './index.scss';
 import axios from "axios";
 import { MediaItem } from "@/types/media";
 import { Movie } from "@/types/movie";
