@@ -1,14 +1,14 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import MediaCard from '@/components/MediaCard';
 import ErrorMessage from '@/components/ErrorMessage';
 import { searchMedia } from '@/utils/tmdb';
 import { MediaItem } from '@/types/media';
 import './page.scss';
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const type = (searchParams.get('type') || 'movie') as 'movie' | 'tv';
@@ -136,5 +136,20 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="search-page">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Carregando busca...</p>
+        </div>
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }
