@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from "react";
 import './index.scss';
-import axios from "axios";
 import { MediaItem } from "@/types/media";
-import { Movie } from "@/types/movie";
-import MovieCard from "../MovieCard";
+import MediaCard from "../MediaCard";
+import ErrorMessage from "../ErrorMessage";
+import { fetchDiscover } from "@/utils/tmdb";
 
 interface Props {
   selectedGenre: number | null;
@@ -16,6 +16,7 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const observer = useRef<IntersectionObserver | null>(null);
     const isFetchingRef = useRef(false);
 
@@ -23,6 +24,7 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
         setMediaItems([]);
         setPage(1);
         setHasMore(true);
+        setError(null);
     }, [selectedGenre, mediaType]);
 
     useEffect(() => {
@@ -30,33 +32,27 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
             if (loading || !hasMore || isFetchingRef.current) return;
             isFetchingRef.current = true;
             setLoading(true);
+            setError(null);
+            
             try {
-                const params: Record<string, string | number> = {
-                    api_key: 'acc2bc295985c96b273c383bf2c6e62a',
-                    language: 'pt-BR',
-                    page: page,
-                };
-                if (selectedGenre) {
-                    params.with_genres = selectedGenre;
-                }
-
-                const response = await axios.get(`https://api.themoviedb.org/3/discover/${mediaType}`, { params });
+                const data = await fetchDiscover(mediaType, page, selectedGenre);
                 
-                if (response.data.results && Array.isArray(response.data.results)) {
-                    setMediaItems(prevItems => page === 1 ? response.data.results : [...prevItems, ...response.data.results]);
-                    setHasMore(response.data.page < response.data.total_pages);
+                if (data.results && Array.isArray(data.results)) {
+                    setMediaItems(prevItems => page === 1 ? data.results : [...prevItems, ...data.results]);
+                    setHasMore(data.page < data.total_pages);
                 } else {
                     setHasMore(false);
                 }
-            } catch (error) {
-                console.error("Error fetching media items:", error);
+            } catch (err) {
+                console.error("Error fetching media items:", err);
+                setError(`Erro ao carregar ${mediaType === 'movie' ? 'filmes' : 'séries'}. Por favor, tente novamente.`);
             } finally {
                 setLoading(false);
                 isFetchingRef.current = false;
             }
         };
 
-        if(hasMore) {
+        if(hasMore && !error) {
           getMediaItems();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -75,33 +71,33 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
         if (node) observer.current.observe(node);
     }, [loading, hasMore]);
 
+    const handleRetry = () => {
+        setError(null);
+        setPage(1);
+        setMediaItems([]);
+        setHasMore(true);
+    };
+
+    if (error && mediaItems.length === 0) {
+        return <ErrorMessage message={error} onRetry={handleRetry} />;
+    }
+
     return (
         <div>
             <ul className="movie-list">
                 {mediaItems.filter(item => item && item.poster_path).map((item, index) => {
                     const key = `${item.id}-${selectedGenre ?? 'all'}-${mediaType}-${index}`;
-                    const movieProps: Movie = {
-                        id: item.id,
-                        title: item.title ?? item.name ?? '',
-                        release_date: item.release_date ?? item.first_air_date ?? '',
-                        poster_path: item.poster_path ?? '',
-                        overview: item.overview,
-                        vote_average: item.vote_average,
-                        backdrop_path: item.backdrop_path,
-                        genres: item.genres,
-                        runtime: item.runtime ?? (item.episode_run_time?.[0] || 0),
-                        tagline: item.tagline,
-                    };
 
                     if (mediaItems.length === index + 1) {
-                        return <MovieCard ref={lastMediaItemElementRef} key={key} movie={movieProps} mediaType={mediaType} />;
+                        return <MediaCard ref={lastMediaItemElementRef} key={key} mediaItem={item} mediaType={mediaType} />;
                     }
-                    return <MovieCard key={key} movie={movieProps} mediaType={mediaType} />;
+                    return <MediaCard key={key} mediaItem={item} mediaType={mediaType} />;
                 })}
             </ul>
             {loading && <p className="loading-indicator">Carregando mais {mediaType === 'movie' ? 'filmes' : 'séries'}...</p>}
+            {error && mediaItems.length > 0 && <ErrorMessage message={error} onRetry={handleRetry} />}
             {!hasMore && mediaItems.length > 0 && <p className="end-of-list-indicator">Você chegou ao fim.</p>}
-            {!loading && mediaItems.length === 0 && <p className="end-of-list-indicator">Nenhum {mediaType === 'movie' ? 'filme' : 'série'} encontrado para este gênero.</p>}
+            {!loading && !error && mediaItems.length === 0 && <p className="end-of-list-indicator">Nenhum {mediaType === 'movie' ? 'filme' : 'série'} encontrado para este gênero.</p>}
         </div>
     );
 }

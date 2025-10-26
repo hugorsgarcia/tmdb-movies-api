@@ -1,0 +1,48 @@
+.error-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  min-height: 200px;
+
+  .error-content {
+    text-align: center;
+    background: rgba(255, 59, 48, 0.1);
+    border: 2px solid rgba(255, 59, 48, 0.3);
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 500px;
+
+    .error-icon {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    .error-text {
+      color: #ff3b30;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .retry-button {
+      background: #ff3b30;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #e32b21;
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+  }
+}

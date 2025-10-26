@@ -2,7 +2,9 @@ import { MediaItem } from "@/types/media";
 import StarRating from "../StarRating";
 import './index.scss';
 import Link from "next/link";
+import Image from "next/image";
 import React from "react";
+import { getPosterUrl } from "@/utils/tmdb";
 
 export interface Props {
     mediaItem: MediaItem;
@@ -14,16 +16,22 @@ const MediaCard = React.forwardRef<HTMLLIElement, Props>(({
 }, ref) => {
     const title = mediaType === 'movie' ? mediaItem.title : mediaItem.name;
     const linkHref = `/${mediaType}/${mediaItem.id}`;
+    const posterUrl = getPosterUrl(mediaItem.poster_path ?? null);
 
     return (
         <li className="movie-card" ref={ref}>
             <div>
-               {mediaItem.poster_path ? (
-                 <img src={`https://image.tmdb.org/t/p/w500${mediaItem.poster_path}`} alt={title || ''}
-                  className="movie-poster" width={200} height={300} />
+               {posterUrl ? (
+                 <Image 
+                   src={posterUrl} 
+                   alt={title || ''}
+                   className="movie-poster" 
+                   width={200} 
+                   height={300} 
+                 />
                ) : (
                  <div className="movie-poster-placeholder" style={{ width: 200, height: 300, backgroundColor: '#333', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#fff' }}>
-                   No Image
+                   Sem Imagem
                  </div>
                )}
             </div>

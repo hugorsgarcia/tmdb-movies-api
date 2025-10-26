@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import './index.scss';
+import { fetchGenres } from '@/utils/tmdb';
 
 interface Genre {
   id: number;
@@ -16,30 +16,38 @@ interface Props {
 
 export default function Header({ mediaType, selectedGenre, onSelectGenre }: Props) {
   const [genres, setGenres] = useState<Genre[]>([]);
+  const [error, setError] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     const getGenres = async () => {
       try {
-        const response = await axios.get(`https://api.themoviedb.org/3/genre/${mediaType}/list`, {
-          params: {
-            api_key: 'acc2bc295985c96b273c383bf2c6e62a',
-            language: 'pt-BR',
-          },
-        });
-        setGenres(response.data.genres);
-      } catch (error) {
-        console.error('Error fetching genres:', error);
+        setError(false);
+        const data = await fetchGenres(mediaType);
+        setGenres(data);
+      } catch (err) {
+        console.error('Error fetching genres:', err);
+        setError(true);
       }
     };
     getGenres();
-  }, [mediaType]); // Re-fetch genres when mediaType changes
+  }, [mediaType]);
 
   const scroll = (scrollOffset: number) => {
     if (listRef.current) {
       listRef.current.scrollLeft += scrollOffset;
     }
   };
+
+  if (error) {
+    return (
+      <header className="header-container">
+        <p style={{ color: '#ff3b30', textAlign: 'center', padding: '1rem' }}>
+          Erro ao carregar gêneros
+        </p>
+      </header>
+    );
+  }
 
   return (
     <header className="header-container">

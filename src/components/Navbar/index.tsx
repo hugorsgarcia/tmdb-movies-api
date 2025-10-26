@@ -1,5 +1,6 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import './index.scss';
 
 interface Props {
@@ -8,10 +9,22 @@ interface Props {
 }
 
 export default function Navbar({ mediaType, onMediaTypeChange }: Props) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=${mediaType}`);
+    }
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-left">
-        <span className="logo">MyTMDB</span>
+        <span className="logo" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+          MyTMDB
+        </span>
         <div className="media-toggle">
           <button 
             className={mediaType === 'movie' ? 'active' : ''} 
@@ -28,13 +41,20 @@ export default function Navbar({ mediaType, onMediaTypeChange }: Props) {
         </div>
       </div>
       <div className="navbar-center">
-        <div className="search-bar">
-          <input type="text" placeholder="Buscar..." suppressHydrationWarning={true} />
-          {/* Search icon would go here */}
-        </div>
+        <form className="search-bar" onSubmit={handleSearch}>
+          <input 
+            type="text" 
+            placeholder="Buscar..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            suppressHydrationWarning={true} 
+          />
+          <button type="submit" className="search-button" aria-label="Buscar">
+            🔍
+          </button>
+        </form>
       </div>
       <div className="navbar-right">
-        {/* Icons for user, settings, etc. would go here */}
         <span className="icon">👤</span>
         <span className="icon">⚙️</span>
         <span className="icon">🎨</span>
