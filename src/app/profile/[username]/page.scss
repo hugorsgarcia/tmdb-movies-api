@@ -1,0 +1,393 @@
+.profile-page {
+  min-height: 100vh;
+  background: #14181c;
+  color: #fff;
+
+  .loading,
+  .not-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    color: #9ab;
+    gap: 1.5rem;
+
+    h1 {
+      font-size: 1.5rem;
+    }
+
+    .btn-primary {
+      background: #00c030;
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #00d435;
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  .profile-header {
+    position: relative;
+
+    .profile-banner {
+      height: 250px;
+      background: linear-gradient(135deg, #2c3440 0%, #14181c 100%);
+      border-bottom: 2px solid #00c030;
+    }
+
+    .profile-info {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+
+      .avatar-container {
+        position: absolute;
+        top: -80px;
+        left: 2rem;
+
+        .avatar {
+          width: 150px;
+          height: 150px;
+          border-radius: 8px;
+          border: 4px solid #14181c;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+      }
+
+      .user-details {
+        margin-left: 180px;
+        padding-top: 1.5rem;
+
+        h1 {
+          color: #fff;
+          font-size: 2rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .username {
+          color: #9ab;
+          font-size: 1.1rem;
+          margin-bottom: 1rem;
+        }
+
+        .bio {
+          color: #ddd;
+          margin-bottom: 1rem;
+          max-width: 600px;
+        }
+
+        .meta-info {
+          display: flex;
+          gap: 1.5rem;
+          color: #9ab;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+  .profile-stats {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1.5rem;
+
+    .stat-item {
+      background: #2c3440;
+      border: 1px solid #456;
+      border-radius: 8px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #00c030;
+        transform: translateY(-2px);
+      }
+
+      .stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #00c030;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-label {
+        display: block;
+        color: #9ab;
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  .profile-content {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem 4rem;
+
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 2px solid #456;
+      margin-bottom: 2rem;
+
+      button {
+        background: transparent;
+        border: none;
+        color: #9ab;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.2s;
+
+        &:hover {
+          color: #fff;
+        }
+
+        &.active {
+          color: #00c030;
+
+          &::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #00c030;
+          }
+        }
+      }
+    }
+
+    .tab-content {
+      .watched-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1.5rem;
+
+        .movie-poster-card {
+          position: relative;
+          cursor: pointer;
+          border-radius: 4px;
+          overflow: hidden;
+          transition: transform 0.2s;
+
+          &:hover {
+            transform: scale(1.05);
+          }
+
+          img {
+            width: 100%;
+            height: auto;
+            display: block;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+          }
+
+          .rating-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+          }
+        }
+      }
+
+      .reviews-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+
+        .review-card {
+          display: flex;
+          gap: 1.5rem;
+          background: #2c3440;
+          border: 1px solid #456;
+          border-radius: 8px;
+          padding: 1.5rem;
+          transition: border-color 0.2s;
+
+          &:hover {
+            border-color: #00c030;
+          }
+
+          .review-poster {
+            width: 100px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+          }
+
+          .review-content {
+            flex: 1;
+
+            h3 {
+              color: #fff;
+              margin-bottom: 0.5rem;
+              font-size: 1.25rem;
+            }
+
+            .review-rating {
+              color: #ffc107;
+              margin-bottom: 1rem;
+              font-size: 1.1rem;
+            }
+
+            .review-text {
+              color: #ddd;
+              line-height: 1.6;
+              margin-bottom: 1rem;
+            }
+
+            .review-meta {
+              display: flex;
+              gap: 1.5rem;
+              color: #9ab;
+              font-size: 0.9rem;
+            }
+          }
+        }
+      }
+
+      .lists-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+
+        .list-card {
+          background: #2c3440;
+          border: 1px solid #456;
+          border-radius: 8px;
+          padding: 1.5rem;
+          transition: all 0.2s;
+          cursor: pointer;
+
+          &:hover {
+            border-color: #00c030;
+            transform: translateY(-2px);
+          }
+
+          h3 {
+            color: #fff;
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+          }
+
+          p {
+            color: #9ab;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+          }
+
+          .list-meta {
+            display: flex;
+            gap: 1rem;
+            color: #9ab;
+            font-size: 0.85rem;
+          }
+        }
+      }
+
+      .empty-state {
+        text-align: center;
+        color: #678;
+        padding: 3rem;
+        font-size: 1.1rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-page {
+    .profile-header {
+      .profile-banner {
+        height: 180px;
+      }
+
+      .profile-info {
+        .avatar-container {
+          top: -60px;
+
+          .avatar {
+            width: 100px;
+            height: 100px;
+          }
+        }
+
+        .user-details {
+          margin-left: 0;
+          padding-top: 60px;
+
+          h1 {
+            font-size: 1.5rem;
+          }
+        }
+      }
+    }
+
+    .profile-stats {
+      grid-template-columns: repeat(2, 1fr);
+
+      .stat-item {
+        padding: 1rem 0.5rem;
+
+        .stat-number {
+          font-size: 1.5rem;
+        }
+      }
+    }
+
+    .profile-content {
+      .tabs {
+        button {
+          padding: 0.75rem 1rem;
+          font-size: 0.9rem;
+        }
+      }
+
+      .tab-content {
+        .watched-grid {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+
+        .reviews-list {
+          .review-card {
+            flex-direction: column;
+
+            .review-poster {
+              width: 100%;
+              height: auto;
+            }
+          }
+        }
+
+        .lists-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    }
+  }
+}

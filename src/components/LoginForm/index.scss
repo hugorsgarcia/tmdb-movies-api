@@ -1,0 +1,140 @@
+.auth-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #14181c 0%, #2c3440 100%);
+}
+
+.auth-form {
+  background: #14181c;
+  border: 1px solid #456;
+  border-radius: 8px;
+  padding: 3rem 2.5rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+  h1 {
+    color: #9ab;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: #678;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+
+  .error-message {
+    background: #ff4444;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      color: #9ab;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: #2c3440;
+      border: 1px solid #456;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: #00c030;
+        box-shadow: 0 0 0 3px rgba(0, 192, 48, 0.1);
+      }
+
+      &::placeholder {
+        color: #678;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #00c030;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+
+    &:hover:not(:disabled) {
+      background: #00d435;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 192, 48, 0.3);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .form-footer {
+    margin-top: 2rem;
+    text-align: center;
+
+    p {
+      color: #9ab;
+      font-size: 0.9rem;
+    }
+
+    .link {
+      color: #00c030;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #00d435;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-form {
+    padding: 2rem 1.5rem;
+
+    h1 {
+      font-size: 1.75rem;
+    }
+  }
+}

@@ -1,0 +1,12 @@
+@import '../LoginForm/index.scss';
+
+.signup-form {
+  max-width: 500px;
+
+  .input-hint {
+    display: block;
+    color: #678;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+  }
+}

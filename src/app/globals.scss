@@ -1,10 +1,78 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  // Letterboxd-inspired color palette
+  --bg-primary: #14181c;
+  --bg-secondary: #2c3440;
+  --bg-tertiary: #1c2128;
+  
+  --border-color: #456;
+  --border-color-light: #567;
+  
+  --text-primary: #fff;
+  --text-secondary: #9ab;
+  --text-tertiary: #678;
+  
+  --accent-primary: #00c030;
+  --accent-hover: #00d435;
+  --accent-light: rgba(0, 192, 48, 0.1);
+  
+  --error: #ff4444;
+  --warning: #ffc107;
+  --info: #2196f3;
 }
 
 body {
-    background-color: #020617;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
 }
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  
+  &:hover {
+    color: var(--accent-hover);
+  }
+}
+
+button {
+  font-family: inherit;
+}
+
+// Scrollbar customization
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-secondary);
+  border-radius: 5px;
+  
+  &:hover {
+    background: var(--border-color);
+  }
+}
+
+// Selection color
+::selection {
+  background: var(--accent-light);
+  color: var(--text-primary);
+}
+
 
