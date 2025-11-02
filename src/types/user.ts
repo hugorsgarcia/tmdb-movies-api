@@ -38,7 +38,8 @@ export interface MovieList {
   description?: string;
   userId: string;
   movies: Array<{
-    movieId: number;
+    mediaId: number;
+    mediaType: 'movie' | 'tv';
     title: string;
     posterPath?: string;
     addedDate: string;

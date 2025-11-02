@@ -2,89 +2,117 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useInteractions } from '@/contexts/InteractionsContext';
 import { UserProfile } from '@/types/user';
 import { useParams, useRouter } from 'next/navigation';
 import './page.scss';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
+  const { 
+    getAllWatchLogs, 
+    getAllReviews, 
+    getWatchlist, 
+    getAllLikes,
+    getAllRatings,
+    getAllLists,
+    createList,
+    deleteList 
+  } = useInteractions();
   const params = useParams();
   const router = useRouter();
   const username = params.username as string;
-  const [activeTab, setActiveTab] = useState<'watched' | 'reviews' | 'lists'>('watched');
+  const [activeTab, setActiveTab] = useState<'watched' | 'reviews' | 'lists' | 'likes'>('watched');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCreateListForm, setShowCreateListForm] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [newListDescription, setNewListDescription] = useState('');
 
   useEffect(() => {
-    // Simular carregamento de perfil
+    // Carregar perfil com dados reais
     const loadProfile = () => {
       if (!user) {
         setLoading(false);
         return;
       }
 
-      // Dados mockados do perfil
-      const mockProfile: UserProfile = {
+      // Obter dados reais do InteractionsContext
+      const watchLogs = getAllWatchLogs();
+      const reviews = getAllReviews();
+      const watchlist = getWatchlist();
+      const ratings = getAllRatings();
+
+      // Calcular estatísticas
+      const currentYear = new Date().getFullYear();
+      const thisYearWatched = watchLogs.filter((log: { watchedDate: string }) => 
+        new Date(log.watchedDate).getFullYear() === currentYear
+      ).length;
+
+      const averageRating = ratings.length > 0
+        ? ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratings.length
+        : 0;
+
+      // Converter watchLogs para o formato esperado
+      const recentWatched = watchLogs
+        .sort((a: { watchedDate: string }, b: { watchedDate: string }) => 
+          new Date(b.watchedDate).getTime() - new Date(a.watchedDate).getTime())
+        .map((log: { mediaId: number; mediaTitle: string; posterPath?: string; watchedDate: string; rating?: number }, index: number) => ({
+          id: index + 1,
+          movieId: log.mediaId,
+          title: log.mediaTitle,
+          posterPath: log.posterPath || '',
+          watchedDate: log.watchedDate,
+          rating: log.rating || 0,
+        }));
+
+      // Converter reviews para o formato esperado
+      const recentReviews = reviews
+        .sort((a: { createdAt: string }, b: { createdAt: string }) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .map((review: { 
+          id: string; 
+          mediaId: number; 
+          mediaTitle: string; 
+          posterPath?: string; 
+          rating?: number; 
+          reviewText: string; 
+          createdAt: string; 
+          containsSpoilers: boolean 
+        }) => ({
+          id: review.id,
+          movieId: review.mediaId,
+          movieTitle: review.mediaTitle,
+          posterPath: review.posterPath || '',
+          userId: user.id,
+          username: user.username,
+          rating: review.rating || 0,
+          reviewText: review.reviewText,
+          createdAt: review.createdAt,
+          likes: 0,
+          containsSpoilers: review.containsSpoilers,
+        }));
+
+      const realProfile: UserProfile = {
         ...user,
         stats: {
-          totalWatched: 127,
-          totalReviews: 45,
-          totalLists: 8,
-          thisYear: 32,
-          averageRating: 4.2,
+          totalWatched: watchLogs.length,
+          totalReviews: reviews.length,
+          totalLists: watchlist.length, // Usando watchlist como "listas" por enquanto
+          thisYear: thisYearWatched,
+          averageRating: averageRating,
         },
-        recentWatched: [
-          {
-            id: 1,
-            movieId: 550,
-            title: 'Clube da Luta',
-            posterPath: '/bptfVGEQuv6vDTIMVCHjJ9Dz8PX.jpg',
-            watchedDate: new Date().toISOString(),
-            rating: 5,
-          },
-          {
-            id: 2,
-            movieId: 680,
-            title: 'Pulp Fiction',
-            posterPath: '/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg',
-            watchedDate: new Date(Date.now() - 86400000).toISOString(),
-            rating: 4.5,
-          },
-        ],
-        recentReviews: [
-          {
-            id: '1',
-            movieId: 550,
-            movieTitle: 'Clube da Luta',
-            posterPath: '/bptfVGEQuv6vDTIMVCHjJ9Dz8PX.jpg',
-            userId: user.id,
-            username: user.username,
-            rating: 5,
-            reviewText: 'Uma obra-prima do cinema contemporâneo. A direção de Fincher é impecável.',
-            createdAt: new Date().toISOString(),
-            likes: 12,
-          },
-        ],
-        lists: [
-          {
-            id: '1',
-            name: 'Favoritos de 2024',
-            description: 'Meus filmes favoritos de 2024',
-            userId: user.id,
-            movies: [],
-            isPublic: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ],
+        recentWatched,
+        recentReviews,
+        lists: [], // Pode ser implementado depois
       };
 
-      setProfile(mockProfile);
+      setProfile(realProfile);
       setLoading(false);
     };
 
     loadProfile();
-  }, [user, username]);
+  }, [user, username, getAllWatchLogs, getAllReviews, getWatchlist, getAllLikes, getAllRatings]);
 
   if (loading) {
     return (
@@ -134,23 +162,27 @@ export default function ProfilePage() {
 
       <div className="profile-stats">
         <div className="stat-item">
-          <span className="stat-number">{profile.stats.totalWatched}</span>
-          <span className="stat-label">Filmes</span>
+          <span className="stat-number">{getAllWatchLogs().length}</span>
+          <span className="stat-label">Assistidos</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{profile.stats.thisYear}</span>
-          <span className="stat-label">Este ano</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-number">{profile.stats.totalReviews}</span>
+          <span className="stat-number">{getAllReviews().length}</span>
           <span className="stat-label">Avaliações</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{profile.stats.totalLists}</span>
+          <span className="stat-number">{getAllLists().length}</span>
           <span className="stat-label">Listas</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{profile.stats.averageRating.toFixed(1)}</span>
+          <span className="stat-number">{getAllLikes().length}</span>
+          <span className="stat-label">Curtidas</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-number">
+            {getAllRatings().length > 0 
+              ? (getAllRatings().reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / getAllRatings().length).toFixed(1)
+              : '0.0'}
+          </span>
           <span className="stat-label">Média</span>
         </div>
       </div>
@@ -174,6 +206,12 @@ export default function ProfilePage() {
             onClick={() => setActiveTab('lists')}
           >
             Listas
+          </button>
+          <button
+            className={activeTab === 'likes' ? 'active' : ''}
+            onClick={() => setActiveTab('likes')}
+          >
+            Curtidas
           </button>
         </div>
 
@@ -231,20 +269,119 @@ export default function ProfilePage() {
           )}
 
           {activeTab === 'lists' && (
-            <div className="lists-grid">
-              {profile.lists.length > 0 ? (
-                profile.lists.map((list) => (
-                  <div key={list.id} className="list-card">
-                    <h3>{list.name}</h3>
-                    {list.description && <p>{list.description}</p>}
-                    <div className="list-meta">
-                      <span>{list.movies.length} filmes</span>
-                      <span>{list.isPublic ? '🌍 Pública' : '🔒 Privada'}</span>
+            <div className="lists-section">
+              <div className="lists-header">
+                <h3>Minhas Listas</h3>
+                <button
+                  className="btn-create-list"
+                  onClick={() => setShowCreateListForm(!showCreateListForm)}
+                >
+                  {showCreateListForm ? 'Cancelar' : '+ Nova Lista'}
+                </button>
+              </div>
+
+              {showCreateListForm && (
+                <div className="create-list-form">
+                  <input
+                    type="text"
+                    placeholder="Nome da lista"
+                    value={newListName}
+                    onChange={(e) => setNewListName(e.target.value)}
+                    maxLength={50}
+                  />
+                  <textarea
+                    placeholder="Descrição (opcional)"
+                    value={newListDescription}
+                    onChange={(e) => setNewListDescription(e.target.value)}
+                    maxLength={200}
+                    rows={3}
+                  />
+                  <button
+                    className="btn-submit"
+                    onClick={() => {
+                      if (newListName.trim()) {
+                        createList(newListName, newListDescription || undefined, true);
+                        setNewListName('');
+                        setNewListDescription('');
+                        setShowCreateListForm(false);
+                      }
+                    }}
+                    disabled={!newListName.trim()}
+                  >
+                    Criar Lista
+                  </button>
+                </div>
+              )}
+
+              <div className="lists-grid">
+                {getAllLists().length > 0 ? (
+                  getAllLists().map((list) => (
+                    <div key={list.id} className="list-card">
+                      <div className="list-header">
+                        <h3>{list.name}</h3>
+                        <button
+                          className="btn-delete"
+                          onClick={() => {
+                            if (confirm(`Deseja excluir a lista "${list.name}"?`)) {
+                              deleteList(list.id);
+                            }
+                          }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                      {list.description && <p className="list-description">{list.description}</p>}
+                      
+                      {list.movies.length > 0 ? (
+                        <div className="list-movies-preview">
+                          {list.movies.slice(0, 4).map((movie) => (
+                            <div key={`${movie.mediaId}-${movie.mediaType}`} className="mini-poster">
+                              {movie.posterPath && (
+                                <img
+                                  src={`https://image.tmdb.org/t/p/w200${movie.posterPath}`}
+                                  alt={movie.title}
+                                  onClick={() => router.push(`/${movie.mediaType}/${movie.mediaId}`)}
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="empty-list">Lista vazia</div>
+                      )}
+                      
+                      <div className="list-meta">
+                        <span>{list.movies.length} {list.movies.length === 1 ? 'filme' : 'filmes'}</span>
+                        <span>{list.isPublic ? '🌍 Pública' : '🔒 Privada'}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="empty-state">Nenhuma lista criada ainda. Crie sua primeira lista!</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'likes' && (
+            <div className="watched-grid">
+              {getAllLikes().length > 0 ? (
+                getAllLikes().map((like) => (
+                  <div key={like.id} className="movie-poster-card">
+                    {like.posterPath && (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w500${like.posterPath}`}
+                        alt={like.mediaTitle || 'Liked media'}
+                        onClick={() => router.push(`/${like.mediaType}/${like.mediaId}`)}
+                      />
+                    )}
+                    <div className="like-badge">
+                      ❤️
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="empty-state">Nenhuma lista criada ainda</p>
+                <p className="empty-state">Nenhum filme curtido ainda</p>
               )}
             </div>
           )}

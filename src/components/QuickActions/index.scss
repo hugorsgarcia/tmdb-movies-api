@@ -1,0 +1,187 @@
+.quick-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #2c3440;
+    border: 1px solid #456;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    color: #9ab;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    white-space: nowrap;
+
+    svg {
+      font-size: 1.1rem;
+    }
+
+    span:not(.tooltip) {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    &:hover {
+      border-color: #678;
+      background: #344050;
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    // Tooltip
+    .tooltip {
+      position: absolute;
+      bottom: calc(100% + 0.5rem);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #14181c;
+      color: #fff;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+      border: 1px solid #456;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 4px solid transparent;
+        border-top-color: #456;
+      }
+    }
+
+    // Like button
+    &.like-btn {
+      &.active {
+        background: rgba(255, 75, 75, 0.1);
+        border-color: #ff4b4b;
+        color: #ff4b4b;
+
+        &:hover {
+          background: rgba(255, 75, 75, 0.2);
+        }
+      }
+
+      &:hover:not(.active) {
+        color: #ff6b6b;
+      }
+    }
+
+    // List button
+    &.list-btn {
+      &:hover {
+        background: rgba(33, 150, 243, 0.1);
+        border-color: #2196f3;
+        color: #2196f3;
+      }
+    }
+
+    // Watch button
+    &.watch-btn {
+      &.active {
+        background: rgba(0, 192, 48, 0.1);
+        border-color: #00c030;
+        color: #00c030;
+
+        &:hover {
+          background: rgba(0, 192, 48, 0.2);
+        }
+      }
+
+      &:hover:not(.active) {
+        color: #00d435;
+      }
+    }
+
+    // Details button
+    &.details-btn {
+      text-decoration: none;
+      
+      button {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: transparent;
+        border: none;
+        color: inherit;
+        font-size: inherit;
+        cursor: pointer;
+        padding: 0;
+        position: relative;
+        
+        svg {
+          font-size: 1.1rem;
+        }
+      }
+
+      &:hover {
+        background: #455a64;
+        border-color: #00c030;
+        color: #00c030;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: none;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .quick-actions {
+    gap: 0.4rem;
+
+    .action-btn {
+      padding: 0.4rem 0.6rem;
+      
+      svg {
+        font-size: 1rem;
+      }
+
+      span:not(.tooltip) {
+        display: none;
+      }
+    }
+  }
+}
+
+// Compact version for cards
+.quick-actions.compact {
+  gap: 0.3rem;
+
+  .action-btn {
+    padding: 0.4rem;
+    min-width: 32px;
+    justify-content: center;
+
+    svg {
+      font-size: 1rem;
+    }
+
+    span:not(.tooltip) {
+      display: none;
+    }
+  }
+}

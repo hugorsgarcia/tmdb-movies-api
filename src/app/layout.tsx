@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.scss";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { InteractionsProvider } from "@/contexts/InteractionsContext";
 
 
 export const metadata: Metadata = {
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body>
         <AuthProvider>
-          {children}
+          <InteractionsProvider>
+            {children}
+          </InteractionsProvider>
         </AuthProvider>
       </body>
     </html>

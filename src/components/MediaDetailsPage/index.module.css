@@ -66,6 +66,30 @@
   font-size: 1.2rem;
 }
 
+.userRating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(0, 192, 48, 0.1);
+  border: 1px solid #00c030;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.userRating label {
+  color: #9ab;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.quickActions {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
 .info {
   display: flex;
   justify-content: center;
@@ -111,6 +135,42 @@
 
 .trailerButton:hover {
   background-color: #f40612;
+}
+
+.reviewSection {
+  margin: 1.5rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.reviewButton {
+  background-color: #00c030;
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reviewButton:hover {
+  background-color: #00d435;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 192, 48, 0.3);
+}
+
+.userReviewSection {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #456;
+}
+
+.userReviewSection h3 {
+  color: #9ab;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .modalOverlay {
@@ -192,6 +252,15 @@
   .rating,
   .info,
   .genres {
+    justify-content: flex-start;
+  }
+
+  .userRating {
+    align-items: flex-start;
+  }
+
+  .quickActions,
+  .reviewSection {
     justify-content: flex-start;
   }
 

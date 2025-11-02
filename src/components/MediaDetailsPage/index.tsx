@@ -3,8 +3,15 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import StarRating from '@/components/StarRating';
+import InteractiveStarRating from '@/components/InteractiveStarRating';
+import QuickActions from '@/components/QuickActions';
+import WatchLogModal from '@/components/WatchLogModal';
+import ReviewModal from '@/components/ReviewModal';
+import ReviewCard from '@/components/ReviewCard';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useMediaDetails } from '@/hooks/useMediaDetails';
+import { useAuth } from '@/contexts/AuthContext';
+import { useInteractions } from '@/contexts/InteractionsContext';
 import { getBackdropUrl, getPosterUrl } from '@/utils/tmdb';
 import styles from './index.module.css';
 
@@ -15,7 +22,12 @@ interface MediaDetailsPageProps {
 
 const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
   const { mediaData, trailerKey, loading, error, retry } = useMediaDetails(mediaType, id);
+  const { isAuthenticated } = useAuth();
+  const { getRating, setRating, getReview } = useInteractions();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isWatchLogModalOpen, setIsWatchLogModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -47,6 +59,14 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
     ? mediaData.runtime 
     : (mediaData.episode_run_time && mediaData.episode_run_time.length > 0 ? mediaData.episode_run_time[0] : null);
 
+  const mediaIdNum = parseInt(id);
+  const userRating = isAuthenticated ? getRating(mediaIdNum, mediaType) : null;
+  const userReview = isAuthenticated ? getReview(mediaIdNum, mediaType) : null;
+
+  const handleRatingChange = (newRating: number) => {
+    setRating(mediaIdNum, mediaType, newRating);
+  };
+
   return (
     <div className={styles.moviePage}>
       <div 
@@ -69,7 +89,30 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
           
           <div className={styles.rating}>
             <StarRating rating={mediaData.vote_average} />
-            <span>{mediaData.vote_average?.toFixed(1)}</span>
+            <span>{mediaData.vote_average?.toFixed(1)} (TMDB)</span>
+          </div>
+
+          {isAuthenticated && (
+            <div className={styles.userRating}>
+              <label>Sua avaliação:</label>
+              <InteractiveStarRating
+                rating={userRating?.rating || 0}
+                onRatingChange={handleRatingChange}
+                size="medium"
+                showValue
+              />
+            </div>
+          )}
+
+          <div className={styles.quickActions}>
+            <QuickActions
+              mediaId={mediaIdNum}
+              mediaType={mediaType}
+              mediaTitle={title || ''}
+              posterPath={mediaData.poster_path}
+              showLabels
+              onWatchClick={() => setIsWatchLogModalOpen(true)}
+            />
           </div>
 
           <div className={styles.info}>
@@ -90,6 +133,32 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
           )}
 
           <p className={styles.overview}>{mediaData.overview}</p>
+
+          {isAuthenticated && (
+            <div className={styles.reviewSection}>
+              <button
+                className={styles.reviewButton}
+                onClick={() => setIsReviewModalOpen(true)}
+              >
+                {userReview ? 'Editar Crítica' : 'Escrever Crítica'}
+              </button>
+            </div>
+          )}
+
+          {userReview && (
+            <div className={styles.userReviewSection}>
+              <h3>Sua Crítica</h3>
+              <ReviewCard
+                username={userReview.username}
+                userAvatar={userReview.userAvatar}
+                rating={userReview.rating}
+                reviewText={userReview.reviewText}
+                containsSpoilers={userReview.containsSpoilers}
+                likes={userReview.likes}
+                createdAt={userReview.createdAt}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -107,6 +176,24 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
           </div>
         </div>
       )}
+
+      <WatchLogModal
+        isOpen={isWatchLogModalOpen}
+        onClose={() => setIsWatchLogModalOpen(false)}
+        mediaId={mediaIdNum}
+        mediaType={mediaType}
+        mediaTitle={title || ''}
+        posterPath={mediaData.poster_path}
+      />
+
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        mediaId={mediaIdNum}
+        mediaType={mediaType}
+        mediaTitle={title || ''}
+        posterPath={mediaData.poster_path}
+      />
     </div>
   );
 };

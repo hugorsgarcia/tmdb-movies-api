@@ -1,0 +1,57 @@
+@import '../WatchLogModal/index.scss';
+
+.review-modal {
+  @extend .watch-log-modal;
+  max-width: 600px;
+
+  .form-group {
+    &.checkbox-group {
+      .checkbox-label {
+        display: flex;
+        align-items: flex-start;
+        cursor: pointer;
+        gap: 0.75rem;
+
+        input[type='checkbox'] {
+          margin-top: 0.25rem;
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
+          accent-color: #00c030;
+        }
+
+        .checkbox-text {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #fff;
+          font-weight: 500;
+
+          .spoiler-icon {
+            color: #ffc107;
+            font-size: 1rem;
+          }
+        }
+      }
+
+      .help-text {
+        display: block;
+        color: #678;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        margin-left: 2rem;
+      }
+    }
+
+    .required {
+      color: #ff6b6b;
+    }
+
+    .help-text {
+      display: block;
+      color: #678;
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+  }
+}
