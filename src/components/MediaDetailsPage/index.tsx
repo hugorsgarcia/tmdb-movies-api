@@ -8,6 +8,7 @@ import QuickActions from '@/components/QuickActions';
 import WatchLogModal from '@/components/WatchLogModal';
 import ReviewModal from '@/components/ReviewModal';
 import ReviewCard from '@/components/ReviewCard';
+import AddToListModal from '@/components/AddToListModal';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useMediaDetails } from '@/hooks/useMediaDetails';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +29,7 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWatchLogModalOpen, setIsWatchLogModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isListModalOpen, setIsListModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -112,6 +114,7 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
               posterPath={mediaData.poster_path}
               showLabels
               onWatchClick={() => setIsWatchLogModalOpen(true)}
+              onListClick={() => setIsListModalOpen(true)}
             />
           </div>
 
@@ -189,6 +192,15 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
       <ReviewModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
+        mediaId={mediaIdNum}
+        mediaType={mediaType}
+        mediaTitle={title || ''}
+        posterPath={mediaData.poster_path}
+      />
+
+      <AddToListModal
+        isOpen={isListModalOpen}
+        onClose={() => setIsListModalOpen(false)}
         mediaId={mediaIdNum}
         mediaType={mediaType}
         mediaTitle={title || ''}

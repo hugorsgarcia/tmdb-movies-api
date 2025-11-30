@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useInteractions } from '@/contexts/InteractionsContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AddToListModal from '../AddToListModal';
 import './index.scss';
 
 interface Props {
@@ -16,6 +15,7 @@ interface Props {
   posterPath?: string;
   showLabels?: boolean;
   onWatchClick?: () => void;
+  onListClick?: () => void;
   detailsLink?: string;
 }
 
@@ -26,6 +26,7 @@ export default function QuickActions({
   posterPath,
   showLabels = false,
   onWatchClick,
+  onListClick,
   detailsLink,
 }: Props) {
   const { isAuthenticated } = useAuth();
@@ -37,7 +38,6 @@ export default function QuickActions({
   } = useInteractions();
 
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
-  const [isListModalOpen, setIsListModalOpen] = useState(false);
 
   const handleAuthRequired = (action: () => void) => {
     if (!isAuthenticated) {
@@ -57,7 +57,9 @@ export default function QuickActions({
     e.preventDefault();
     e.stopPropagation();
     handleAuthRequired(() => {
-      setIsListModalOpen(true);
+      if (onListClick) {
+        onListClick();
+      }
     });
   };
 
@@ -141,15 +143,6 @@ export default function QuickActions({
         </Link>
       )}
       </div>
-
-      <AddToListModal
-        isOpen={isListModalOpen}
-        onClose={() => setIsListModalOpen(false)}
-        mediaId={mediaId}
-        mediaType={mediaType}
-        mediaTitle={mediaTitle}
-        posterPath={posterPath}
-      />
     </>
   );
 }

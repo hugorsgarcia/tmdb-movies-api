@@ -8,6 +8,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { getPosterUrl } from "@/utils/tmdb";
 import WatchLogModal from "../WatchLogModal";
+import AddToListModal from "../AddToListModal";
 
 export interface Props {
     mediaItem: MediaItem;
@@ -18,6 +19,7 @@ const MediaCard = React.forwardRef<HTMLLIElement, Props>(({
     mediaItem, mediaType
 }, ref) => {
     const [isWatchLogModalOpen, setIsWatchLogModalOpen] = useState(false);
+    const [isListModalOpen, setIsListModalOpen] = useState(false);
     const title = mediaType === 'movie' ? mediaItem.title : mediaItem.name;
     const linkHref = `/${mediaType}/${mediaItem.id}`;
     const posterUrl = getPosterUrl(mediaItem.poster_path ?? null);
@@ -47,6 +49,7 @@ const MediaCard = React.forwardRef<HTMLLIElement, Props>(({
                        mediaTitle={title || ''}
                        posterPath={mediaItem.poster_path}
                        onWatchClick={() => setIsWatchLogModalOpen(true)}
+                       onListClick={() => setIsListModalOpen(true)}
                        detailsLink={linkHref}
                      />
                    </div>
@@ -65,6 +68,15 @@ const MediaCard = React.forwardRef<HTMLLIElement, Props>(({
             <WatchLogModal
                 isOpen={isWatchLogModalOpen}
                 onClose={() => setIsWatchLogModalOpen(false)}
+                mediaId={mediaItem.id}
+                mediaType={mediaType}
+                mediaTitle={title || ''}
+                posterPath={mediaItem.poster_path}
+            />
+
+            <AddToListModal
+                isOpen={isListModalOpen}
+                onClose={() => setIsListModalOpen(false)}
                 mediaId={mediaItem.id}
                 mediaType={mediaType}
                 mediaTitle={title || ''}
