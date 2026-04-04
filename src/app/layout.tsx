@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import "./globals.scss";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { InteractionsProvider } from "@/contexts/InteractionsContext";
-
+import { MediaTypeProvider } from "@/contexts/MediaTypeContext";
+import NavbarWrapper from "@/components/Navbar/NavbarWrapper";
 
 export const metadata: Metadata = {
   title: "MyLetterboxd - Rastreie filmes e séries",
@@ -19,7 +20,10 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <InteractionsProvider>
-            {children}
+            <MediaTypeProvider>
+              <NavbarWrapper />
+              <main>{children}</main>
+            </MediaTypeProvider>
           </InteractionsProvider>
         </AuthProvider>
       </body>
