@@ -69,6 +69,6 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string, displayName: string) => Promise<void>;
-  logout: () => void;
+  logout: () => void | Promise<void>;
   loading: boolean;
 }

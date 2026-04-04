@@ -1,107 +1,161 @@
 import { render, screen, act, waitFor } from '@testing-library/react';
-import { expect, test, describe } from 'vitest';
+import { renderHook } from '@testing-library/react';
+import { expect, test, describe, vi, beforeEach } from 'vitest';
 import { AuthProvider, useAuth } from './AuthContext';
-import bcrypt from 'bcryptjs';
+import React from 'react';
 
-const TestComponent = () => {
-  const { user, signup, login, isAuthenticated } = useAuth();
+// Mock Supabase
+const mockSignUp = vi.fn();
+const mockSignInWithPassword = vi.fn();
+const mockSignOut = vi.fn();
+const mockGetSession = vi.fn();
+const mockOnAuthStateChange = vi.fn();
+const mockFrom = vi.fn();
 
-  return (
-    <div>
-      <div data-testid="is-authenticated">{isAuthenticated.toString()}</div>
-      <div data-testid="username">{user?.username || 'none'}</div>
-      <button onClick={() => signup('testuser', 'test@test.com', 'mypassword', 'Test User')}>
-        Signup
-      </button>
-      <button onClick={() => login('test@test.com', 'mypassword')}>
-        Login
-      </button>
-    </div>
-  );
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      signUp: (...args: unknown[]) => mockSignUp(...args),
+      signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
+      signOut: () => mockSignOut(),
+      getSession: () => mockGetSession(),
+      onAuthStateChange: () => {
+        mockOnAuthStateChange();
+        return {
+          data: {
+            subscription: { unsubscribe: vi.fn() },
+          },
+        };
+      },
+    },
+    from: (...args: unknown[]) => mockFrom(...args),
+  },
+}));
+
+const mockProfile = {
+  id: 'test-uuid-123',
+  username: 'testuser',
+  email: 'test@test.com',
+  display_name: 'Test User',
+  avatar_url: 'https://ui-avatars.com/api/?name=Test+User&background=random',
+  bio: '',
+  location: null,
+  website: null,
+  joined_date: new Date().toISOString(),
 };
 
-describe('AuthContext SEC-001 Fix', () => {
-  test('senhas não devem ser salvas em texto plano e o login deve funcionar com bcrypt (SEC-001)', async () => {
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    );
+describe('AuthContext com Supabase (DBA-001)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
 
-    // Initial state
-    expect(screen.getByTestId('is-authenticated').textContent).toBe('false');
+    // Default: no session
+    mockGetSession.mockResolvedValue({ data: { session: null } });
 
-    // Simulate Signup
-    await act(async () => {
-      screen.getByText('Signup').click();
+    // Default: profile query
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: mockProfile, error: null }),
+        }),
+      }),
     });
-
-    // Check if logged in
-    await waitFor(() => {
-      expect(screen.getByTestId('is-authenticated').textContent).toBe('true');
-    });
-    expect(screen.getByTestId('username').textContent).toBe('testuser');
-
-    // SEC-001 Verify Storage
-    const usersJson = localStorage.getItem('users');
-    expect(usersJson).not.toBeNull();
-    
-    if (usersJson) {
-      const users = JSON.parse(usersJson);
-      expect(users.length).toBe(1);
-      
-      const storedUser = users[0];
-      // Assert password is NOT stored as plaintext
-      expect(storedUser.password).not.toBe('mypassword');
-      
-      // Assert password is a valid bcrypt hash
-      const isValidHash = await bcrypt.compare('mypassword', storedUser.password);
-      expect(isValidHash).toBe(true);
-    }
   });
 
-  test('deve bloquear login após 5 tentativas incorretas (SEC-004)', async () => {
-    localStorage.clear();
-    const { renderHook } = await import('@testing-library/react');
+  test('signup deve chamar supabase.auth.signUp e não usar bcryptjs', async () => {
+    mockSignUp.mockResolvedValue({
+      data: { user: { id: 'test-uuid-123' } },
+      error: null,
+    });
+
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthProvider>{children}</AuthProvider>
     );
-
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    // Setup: Create a user
     await act(async () => {
-      await result.current.signup('rate', 'rate@test.com', 'mypassword', 'Rate User');
+      await result.current.signup('testuser', 'test@test.com', 'mypassword', 'Test User');
     });
 
-    // Logout
-    act(() => {
-      result.current.logout();
+    // Verificar que chamou supabase.auth.signUp
+    expect(mockSignUp).toHaveBeenCalledWith({
+      email: 'test@test.com',
+      password: 'mypassword',
+      options: {
+        data: {
+          username: 'testuser',
+          display_name: 'Test User',
+          avatar_url: expect.stringContaining('ui-avatars.com'),
+        },
+      },
     });
 
-    // 5 Erros propositais
+    // Verificar que NÃO há bcryptjs no localStorage (dados ficam no Supabase agora)
+    expect(localStorage.getItem('users')).toBeNull();
+  });
+
+  test('login deve chamar supabase.auth.signInWithPassword', async () => {
+    mockSignInWithPassword.mockResolvedValue({
+      data: { user: { id: 'test-uuid-123' } },
+      error: null,
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.login('test@test.com', 'mypassword');
+    });
+
+    expect(mockSignInWithPassword).toHaveBeenCalledWith({
+      email: 'test@test.com',
+      password: 'mypassword',
+    });
+  });
+
+  test('deve bloquear login após 5 tentativas incorretas (SEC-004 — dupla camada)', async () => {
+    localStorage.clear();
+
+    // Simular falha de login no Supabase
+    mockSignInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Invalid login credentials' },
+    });
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // 5 tentativas com senha errada
     for (let i = 0; i < 5; i++) {
-      let threw = false;
       try {
         await act(async () => {
           await result.current.login('rate@test.com', 'wrongpassword');
         });
-      } catch (e) {
-        threw = true;
+      } catch {
+        // Esperado
       }
-      expect(threw).toBe(true);
     }
 
-    // Sexta tentativa deve ser bloqueada imediatamente pelo brute force shield
+    // Sexta tentativa deve ser bloqueada pelo rate limit client-side
     let errorMessage = '';
     try {
       await act(async () => {
         await result.current.login('rate@test.com', 'wrongpassword');
       });
-    } catch (e: any) {
-      errorMessage = e.message;
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        errorMessage = e.message;
+      }
     }
 
     expect(errorMessage).toContain('Muitas tentativas');
+
+    // Verificar que o Supabase NÃO foi chamado na 6ª tentativa
+    // (5 chamadas reais + 0 na 6ª = 5 total)
+    expect(mockSignInWithPassword).toHaveBeenCalledTimes(5);
   });
 });

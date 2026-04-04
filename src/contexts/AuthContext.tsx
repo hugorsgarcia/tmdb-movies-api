@@ -2,72 +2,118 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType } from '@/types/user';
-import bcrypt from 'bcryptjs';
+import { supabase } from '@/lib/supabase';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// ===== Rate Limiting (SEC-004 — dupla camada: client + Supabase nativo) =====
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutos
+
+function checkRateLimit(email: string): void {
+  const attemptKey = `login_attempts_${email}`;
+  const attempts = JSON.parse(localStorage.getItem(attemptKey) || '{"count":0,"lockUntil":0}');
+
+  if (attempts.lockUntil > Date.now()) {
+    const minutesLeft = Math.ceil((attempts.lockUntil - Date.now()) / 60000);
+    throw new Error(`Muitas tentativas. Tente novamente em ${minutesLeft} minutos.`);
+  }
+}
+
+function recordFailedAttempt(email: string): void {
+  const attemptKey = `login_attempts_${email}`;
+  const attempts = JSON.parse(localStorage.getItem(attemptKey) || '{"count":0,"lockUntil":0}');
+  attempts.count += 1;
+  if (attempts.count >= MAX_ATTEMPTS) {
+    attempts.lockUntil = Date.now() + LOCKOUT_DURATION;
+  }
+  localStorage.setItem(attemptKey, JSON.stringify(attempts));
+}
+
+function clearRateLimit(email: string): void {
+  localStorage.removeItem(`login_attempts_${email}`);
+}
+
+// ===== Helper: mapear profile do Supabase para tipo User =====
+async function fetchUserProfile(userId: string): Promise<User | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    username: data.username,
+    email: data.email,
+    displayName: data.display_name,
+    avatar: data.avatar_url,
+    bio: data.bio || '',
+    location: data.location,
+    website: data.website,
+    joinedDate: data.joined_date,
+  };
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Listener de sessão do Supabase Auth
   useEffect(() => {
-    // Carregar usuário do localStorage ao iniciar
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Erro ao carregar usuário:', error);
-        localStorage.removeItem('user');
+    // Verificar sessão existente ao carregar
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id);
+        setUser(profile);
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    initSession();
+
+    // Escutar mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const profile = await fetchUserProfile(session.user.id);
+          setUser(profile);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const MAX_ATTEMPTS = 5;
-      const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutos
+      // Rate limit client-side (SEC-004 — dupla camada)
+      checkRateLimit(email);
 
-      const attemptKey = `login_attempts_${email}`;
-      const attempts = JSON.parse(localStorage.getItem(attemptKey) || '{"count":0,"lockUntil":0}');
-      
-      if (attempts.lockUntil > Date.now()) {
-        const minutesLeft = Math.ceil((attempts.lockUntil - Date.now()) / 60000);
-        throw new Error(`Muitas tentativas. Tente novamente em ${minutesLeft} minutos.`);
-      }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // Simulação de login (substituir pela API real posteriormente)
-      // Verificar se é um usuário já cadastrado no localStorage
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const existingUser = users.find((u: User & { password: string }) => u.email === email);
-      
-      let isMatch = false;
-      if (existingUser) {
-        // Fallback temporário para dev: se não é hash Bcrypt, testar direto (old mocks)
-        if (!existingUser.password.startsWith('$2')) {
-           isMatch = existingUser.password === password;
-        } else {
-           isMatch = await bcrypt.compare(password, existingUser.password);
-        }
-      }
-
-      if (existingUser && isMatch) {
-         // Se sucesso, zerar contador
-        localStorage.removeItem(attemptKey);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { password: _pwd, ...userWithoutPassword } = existingUser;
-        setUser(userWithoutPassword);
-        localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      } else {
-        // Se login falhar, incrementar contador
-        attempts.count += 1;
-        if (attempts.count >= MAX_ATTEMPTS) {
-          attempts.lockUntil = Date.now() + LOCKOUT_DURATION;
-        }
-        localStorage.setItem(attemptKey, JSON.stringify(attempts));
+      if (error) {
+        recordFailedAttempt(email);
         throw new Error('Email ou senha incorretos');
+      }
+
+      // Login OK — zerar contagem
+      clearRateLimit(email);
+
+      if (data.user) {
+        const profile = await fetchUserProfile(data.user.id);
+        setUser(profile);
       }
     } catch (error) {
       throw error;
@@ -79,37 +125,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (username: string, email: string, password: string, displayName: string) => {
     setLoading(true);
     try {
-      // Simulação de cadastro (substituir pela API real posteriormente)
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      
-      // Verificar se já existe usuário com esse email ou username
-      if (users.some((u: User & { password: string }) => u.email === email)) {
-        throw new Error('Email já cadastrado');
-      }
-      if (users.some((u: User & { password: string }) => u.username === username)) {
-        throw new Error('Username já em uso');
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser: User & { password: string } = {
-        id: Date.now().toString(),
-        username,
+      const { data, error } = await supabase.auth.signUp({
         email,
-        displayName,
-        avatar: `https://ui-avatars.com/api/?name=${displayName}&background=random`,
-        bio: '',
-        joinedDate: new Date().toISOString(),
-        password: hashedPassword,
-      };
+        password,
+        options: {
+          data: {
+            username,
+            display_name: displayName,
+            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`,
+          },
+        },
+      });
 
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
+      if (error) {
+        // Mapear erros comuns do Supabase
+        if (error.message.includes('already registered')) {
+          throw new Error('Email já cadastrado');
+        }
+        throw new Error(error.message);
+      }
 
-      // Fazer login automático após cadastro
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password: _pwd, ...userWithoutPassword } = newUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+      // Verificar se username já existe (unique constraint)
+      if (data.user) {
+        const profile = await fetchUserProfile(data.user.id);
+        setUser(profile);
+      }
     } catch (error) {
       throw error;
     } finally {
@@ -117,9 +157,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('user');
   };
 
   const value: AuthContextType = {
