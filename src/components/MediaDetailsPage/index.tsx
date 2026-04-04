@@ -171,10 +171,13 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
             <button className={styles.closeButton} onClick={() => setIsModalOpen(false)}>×</button>
             <iframe
               src={`https://www.youtube.com/embed/${trailerKey}`}
-              title="YouTube video player"
-              style={{ border: 0 }}
+              sandbox="allow-scripts allow-same-origin allow-presentation"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              title="YouTube video player"
+              style={{ border: 0 }}
             ></iframe>
           </div>
         </div>
