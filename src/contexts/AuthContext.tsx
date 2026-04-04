@@ -105,6 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         recordFailedAttempt(email);
+        console.error('[Auth] Supabase login error:', error.message);
+
+        // Mapear erros do Supabase para mensagens amigáveis
+        if (error.message.includes('Email not confirmed')) {
+          throw new Error('Email ainda não confirmado. Verifique sua caixa de entrada.');
+        }
         throw new Error('Email ou senha incorretos');
       }
 
