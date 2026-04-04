@@ -21,8 +21,9 @@ export default function RootLayout({
         <AuthProvider>
           <InteractionsProvider>
             <MediaTypeProvider>
+              <a href="#main-content" className="skip-link">Pular para o conteúdo</a>
               <NavbarWrapper />
-              <main>{children}</main>
+              <main id="main-content">{children}</main>
             </MediaTypeProvider>
           </InteractionsProvider>
         </AuthProvider>
