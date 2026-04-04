@@ -59,4 +59,49 @@ describe('AuthContext SEC-001 Fix', () => {
       expect(isValidHash).toBe(true);
     }
   });
+
+  test('deve bloquear login após 5 tentativas incorretas (SEC-004)', async () => {
+    localStorage.clear();
+    const { renderHook } = await import('@testing-library/react');
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AuthProvider>{children}</AuthProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // Setup: Create a user
+    await act(async () => {
+      await result.current.signup('rate', 'rate@test.com', 'mypassword', 'Rate User');
+    });
+
+    // Logout
+    act(() => {
+      result.current.logout();
+    });
+
+    // 5 Erros propositais
+    for (let i = 0; i < 5; i++) {
+      let threw = false;
+      try {
+        await act(async () => {
+          await result.current.login('rate@test.com', 'wrongpassword');
+        });
+      } catch (e) {
+        threw = true;
+      }
+      expect(threw).toBe(true);
+    }
+
+    // Sexta tentativa deve ser bloqueada imediatamente pelo brute force shield
+    let errorMessage = '';
+    try {
+      await act(async () => {
+        await result.current.login('rate@test.com', 'wrongpassword');
+      });
+    } catch (e: any) {
+      errorMessage = e.message;
+    }
+
+    expect(errorMessage).toContain('Muitas tentativas');
+  });
 });

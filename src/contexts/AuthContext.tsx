@@ -27,6 +27,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
+      const MAX_ATTEMPTS = 5;
+      const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutos
+
+      const attemptKey = `login_attempts_${email}`;
+      const attempts = JSON.parse(localStorage.getItem(attemptKey) || '{"count":0,"lockUntil":0}');
+      
+      if (attempts.lockUntil > Date.now()) {
+        const minutesLeft = Math.ceil((attempts.lockUntil - Date.now()) / 60000);
+        throw new Error(`Muitas tentativas. Tente novamente em ${minutesLeft} minutos.`);
+      }
+
       // Simulação de login (substituir pela API real posteriormente)
       // Verificar se é um usuário já cadastrado no localStorage
       const users = JSON.parse(localStorage.getItem('users') || '[]');
@@ -43,11 +54,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (existingUser && isMatch) {
+         // Se sucesso, zerar contador
+        localStorage.removeItem(attemptKey);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password: _pwd, ...userWithoutPassword } = existingUser;
         setUser(userWithoutPassword);
         localStorage.setItem('user', JSON.stringify(userWithoutPassword));
       } else {
+        // Se login falhar, incrementar contador
+        attempts.count += 1;
+        if (attempts.count >= MAX_ATTEMPTS) {
+          attempts.lockUntil = Date.now() + LOCKOUT_DURATION;
+        }
+        localStorage.setItem(attemptKey, JSON.stringify(attempts));
         throw new Error('Email ou senha incorretos');
       }
     } catch (error) {
