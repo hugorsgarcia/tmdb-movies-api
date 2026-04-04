@@ -6,6 +6,8 @@ import MediaCard from "../MediaCard";
 import ErrorMessage from "../ErrorMessage";
 import { fetchDiscover } from "@/utils/tmdb";
 
+import SkeletonCard from "../SkeletonCard";
+
 interface Props {
   selectedGenre: number | null;
   mediaType: 'movie' | 'tv';
@@ -100,7 +102,13 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
                     return <MediaCard key={key} mediaItem={item} mediaType={mediaType} />;
                 })}
             </ul>
-            {loading && <p className="loading-indicator">Carregando mais {mediaType === 'movie' ? 'filmes' : 'séries'}...</p>}
+            {loading && (
+                <ul className="movie-list" style={{ marginTop: mediaItems.length > 0 ? '16px' : '0' }}>
+                    {[...Array(10)].map((_, i) => (
+                        <SkeletonCard key={`skeleton-${i}`} />
+                    ))}
+                </ul>
+            )}
             {error && mediaItems.length > 0 && <ErrorMessage message={error} onRetry={handleRetry} />}
             {!hasMore && mediaItems.length > 0 && <p className="end-of-list-indicator">Você chegou ao fim.</p>}
             {!loading && !error && mediaItems.length === 0 && <p className="end-of-list-indicator">Nenhum {mediaType === 'movie' ? 'filme' : 'série'} encontrado para este gênero.</p>}
