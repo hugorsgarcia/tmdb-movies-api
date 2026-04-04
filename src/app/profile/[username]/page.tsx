@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [showCreateListForm, setShowCreateListForm] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListDescription, setNewListDescription] = useState('');
+  const [listToDelete, setListToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     // Carregar perfil com dados reais
@@ -319,16 +320,25 @@ export default function ProfilePage() {
                     <div key={list.id} className="list-card">
                       <div className="list-header">
                         <h3>{list.name}</h3>
-                        <button
-                          className="btn-delete"
-                          onClick={() => {
-                            if (confirm(`Deseja excluir a lista "${list.name}"?`)) {
-                              deleteList(list.id);
-                            }
-                          }}
-                        >
-                          🗑️
-                        </button>
+                        <div className="list-actions" style={{ marginLeft: 'auto' }}>
+                          {listToDelete === list.id ? (
+                            <div className="confirm-delete" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.8.5rem', color: 'var(--danger-color, #ff4d4d)' }}>Excluir lista?</span>
+                              <button className="btn-delete confirm-btn" style={{ color: 'var(--danger-color, #ff4d4d)' }} onClick={() => {
+                                deleteList(list.id);
+                                setListToDelete(null);
+                              }}>Sim</button>
+                              <button className="btn-delete cancel-btn" onClick={() => setListToDelete(null)}>Não</button>
+                            </div>
+                          ) : (
+                            <button
+                              className="btn-delete"
+                              onClick={() => setListToDelete(list.id)}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {list.description && <p className="list-description">{list.description}</p>}
                       

@@ -29,6 +29,7 @@ export default function ReviewModal({
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [containsSpoilers, setContainsSpoilers] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (existingReview) {
@@ -40,13 +41,15 @@ export default function ReviewModal({
       setReviewText('');
       setContainsSpoilers(false);
     }
+    setError('');
   }, [existingReview, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
     if (reviewText.trim().length < 10) {
-      alert('A crítica deve ter pelo menos 10 caracteres.');
+      setError('A crítica deve ter pelo menos 10 caracteres.');
       return;
     }
 
@@ -63,12 +66,20 @@ export default function ReviewModal({
     onClose();
   };
 
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
   const handleDelete = () => {
-    if (existingReview && confirm('Tem certeza que deseja excluir esta crítica?')) {
+    if (existingReview) {
       deleteReview(existingReview.id);
+      setShowConfirmDelete(false);
       onClose();
     }
   };
+
+  // Reseta confirm quando abrir/fechar
+  useEffect(() => {
+    setShowConfirmDelete(false);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -83,6 +94,8 @@ export default function ReviewModal({
           <h2>{existingReview ? 'Editar Crítica' : 'Escrever Crítica'}</h2>
           <p className="media-title">{mediaTitle}</p>
         </div>
+
+        {error && <div className="error-message" style={{ color: 'var(--danger-color, #ff4d4d)', marginBottom: '1rem', padding: '0.5rem', backgroundColor: 'rgba(255, 77, 77, 0.1)', borderRadius: '4px' }}>{error}</div>}
 
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-group">
@@ -141,9 +154,21 @@ export default function ReviewModal({
 
           <div className="modal-actions">
             {existingReview && (
-              <button type="button" className="btn-remove" onClick={handleDelete}>
-                Excluir Crítica
-              </button>
+              showConfirmDelete ? (
+                <div className="confirm-delete-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Excluir crítica?</span>
+                    <button type="button" className="btn-remove" onClick={handleDelete} style={{ padding: '0.25rem 0.5rem' }}>
+                        Sim
+                    </button>
+                    <button type="button" className="btn-cancel" onClick={() => setShowConfirmDelete(false)} style={{ padding: '0.25rem 0.5rem' }}>
+                        Não
+                    </button>
+                </div>
+              ) : (
+                <button type="button" className="btn-remove" onClick={() => setShowConfirmDelete(true)}>
+                  Excluir Crítica
+                </button>
+              )
             )}
             <div className="right-actions">
               <button type="button" className="btn-cancel" onClick={onClose}>

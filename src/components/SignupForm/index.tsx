@@ -21,6 +21,12 @@ export default function SignupForm() {
     setError('');
 
     // Validações
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Por favor, insira um email válido');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('As senhas não coincidem');
       return;
