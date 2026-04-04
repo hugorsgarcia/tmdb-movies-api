@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchMediaDetails, fetchMediaVideos } from '@/utils/tmdb';
 import { MediaItem } from '@/types/media';
 
@@ -14,62 +14,34 @@ export function useMediaDetails(mediaType: 'movie' | 'tv', id: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadMediaDetails = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        const [details, videos] = await Promise.all([
-          fetchMediaDetails(mediaType, id),
-          fetchMediaVideos(mediaType, id),
-        ]);
-
-        setMediaData(details);
-
-        const officialTrailer = (videos as VideoResult[]).find(
-          (video) => video.type === 'Trailer' && video.site === 'YouTube'
-        );
-
-        setTrailerKey(officialTrailer?.key || null);
-      } catch (err) {
-        console.error('Error fetching media details:', err);
-        setError('Não foi possível carregar os detalhes. Por favor, tente novamente.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadMediaDetails();
-  }, [mediaType, id]);
-
-  const retry = () => {
+  const loadMediaDetails = useCallback(async () => {
     setLoading(true);
     setError(null);
-    // Re-executar a chamada
-    const loadMediaDetails = async () => {
-      try {
-        const [details, videos] = await Promise.all([
-          fetchMediaDetails(mediaType, id),
-          fetchMediaVideos(mediaType, id),
-        ]);
 
-        setMediaData(details);
+    try {
+      const [details, videos] = await Promise.all([
+        fetchMediaDetails(mediaType, id),
+        fetchMediaVideos(mediaType, id),
+      ]);
 
-        const officialTrailer = (videos as VideoResult[]).find(
-          (video) => video.type === 'Trailer' && video.site === 'YouTube'
-        );
+      setMediaData(details);
 
-        setTrailerKey(officialTrailer?.key || null);
-      } catch (err) {
-        console.error('Error fetching media details:', err);
-        setError('Não foi possível carregar os detalhes. Por favor, tente novamente.');
-      } finally {
-        setLoading(false);
-      }
-    };
+      const officialTrailer = (videos as VideoResult[]).find(
+        (video) => video.type === 'Trailer' && video.site === 'YouTube'
+      );
+
+      setTrailerKey(officialTrailer?.key || null);
+    } catch (err) {
+      console.error('Error fetching media details:', err);
+      setError('Não foi possível carregar os detalhes. Por favor, tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }, [mediaType, id]);
+
+  useEffect(() => {
     loadMediaDetails();
-  };
+  }, [loadMediaDetails]);
 
-  return { mediaData, trailerKey, loading, error, retry };
+  return { mediaData, trailerKey, loading, error, retry: loadMediaDetails };
 }

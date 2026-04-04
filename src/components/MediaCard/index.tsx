@@ -35,7 +35,6 @@ const MediaCard = React.forwardRef<HTMLLIElement, Props>(({
                        className="movie-poster" 
                        width={300} 
                        height={450}
-                       unoptimized
                      />
                    ) : (
                      <div className="movie-poster-placeholder">
