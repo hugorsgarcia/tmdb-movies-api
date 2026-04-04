@@ -1,3 +1,5 @@
+import { WatchLog, MediaReview, MediaList } from './interactions';
+
 export interface User {
   id: string;
   username: string;
@@ -10,45 +12,6 @@ export interface User {
   joinedDate: string;
 }
 
-export interface WatchedMovie {
-  id: number;
-  movieId: number;
-  title: string;
-  posterPath?: string;
-  watchedDate: string;
-  rating?: number;
-}
-
-export interface Review {
-  id: string;
-  movieId: number;
-  movieTitle: string;
-  posterPath?: string;
-  userId: string;
-  username: string;
-  rating: number;
-  reviewText: string;
-  createdAt: string;
-  likes: number;
-}
-
-export interface MovieList {
-  id: string;
-  name: string;
-  description?: string;
-  userId: string;
-  movies: Array<{
-    mediaId: number;
-    mediaType: 'movie' | 'tv';
-    title: string;
-    posterPath?: string;
-    addedDate: string;
-  }>;
-  isPublic: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface UserStats {
   totalWatched: number;
   totalReviews: number;
@@ -59,9 +22,9 @@ export interface UserStats {
 
 export interface UserProfile extends User {
   stats: UserStats;
-  recentWatched: WatchedMovie[];
-  recentReviews: Review[];
-  lists: MovieList[];
+  recentWatched: WatchLog[];
+  recentReviews: MediaReview[];
+  lists: MediaList[];
 }
 
 export interface AuthContextType {

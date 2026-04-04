@@ -54,45 +54,12 @@ export default function ProfilePage() {
         ? ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratings.length
         : 0;
 
-      // Converter watchLogs para o formato esperado
+      // Usar a estrutura nativa de WatchLog e MediaReview
       const recentWatched = watchLogs
-        .sort((a: { watchedDate: string }, b: { watchedDate: string }) => 
-          new Date(b.watchedDate).getTime() - new Date(a.watchedDate).getTime())
-        .map((log: { mediaId: number; mediaTitle: string; posterPath?: string; watchedDate: string; rating?: number }, index: number) => ({
-          id: index + 1,
-          movieId: log.mediaId,
-          title: log.mediaTitle,
-          posterPath: log.posterPath || '',
-          watchedDate: log.watchedDate,
-          rating: log.rating || 0,
-        }));
+        .sort((a, b) => new Date(b.watchedDate).getTime() - new Date(a.watchedDate).getTime());
 
-      // Converter reviews para o formato esperado
       const recentReviews = reviews
-        .sort((a: { createdAt: string }, b: { createdAt: string }) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .map((review: { 
-          id: string; 
-          mediaId: number; 
-          mediaTitle: string; 
-          posterPath?: string; 
-          rating?: number; 
-          reviewText: string; 
-          createdAt: string; 
-          containsSpoilers: boolean 
-        }) => ({
-          id: review.id,
-          movieId: review.mediaId,
-          movieTitle: review.mediaTitle,
-          posterPath: review.posterPath || '',
-          userId: user.id,
-          username: user.username,
-          rating: review.rating || 0,
-          reviewText: review.reviewText,
-          createdAt: review.createdAt,
-          likes: 0,
-          containsSpoilers: review.containsSpoilers,
-        }));
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       const realProfile: UserProfile = {
         ...user,
@@ -105,7 +72,7 @@ export default function ProfilePage() {
         },
         recentWatched,
         recentReviews,
-        lists: [], // Pode ser implementado depois
+        lists: getAllLists(), 
       };
 
       setProfile(realProfile);
@@ -224,8 +191,8 @@ export default function ProfilePage() {
                   <div key={movie.id} className="movie-poster-card">
                     <img
                       src={`https://image.tmdb.org/t/p/w500${movie.posterPath}`}
-                      alt={movie.title}
-                      onClick={() => router.push(`/movie/${movie.movieId}`)}
+                      alt={movie.mediaTitle}
+                      onClick={() => router.push(`/${movie.mediaType || 'movie'}/${movie.mediaId}`)}
                     />
                     {movie.rating && (
                       <div className="rating-badge">
@@ -247,13 +214,13 @@ export default function ProfilePage() {
                   <div key={review.id} className="review-card">
                     <img
                       src={`https://image.tmdb.org/t/p/w200${review.posterPath}`}
-                      alt={review.movieTitle}
+                      alt={review.mediaTitle}
                       className="review-poster"
                     />
                     <div className="review-content">
-                      <h3>{review.movieTitle}</h3>
+                      <h3>{review.mediaTitle}</h3>
                       <div className="review-rating">
-                        {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+                        {'★'.repeat(review.rating || 0)}{'☆'.repeat(5 - (review.rating || 0))}
                       </div>
                       <p className="review-text">{review.reviewText}</p>
                       <div className="review-meta">

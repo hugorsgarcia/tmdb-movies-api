@@ -28,14 +28,16 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
     }, [selectedGenre, mediaType]);
 
     useEffect(() => {
+        let isMounted = true;
         const getMediaItems = async () => {
-            if (loading || !hasMore || isFetchingRef.current) return;
+            if (isFetchingRef.current) return;
             isFetchingRef.current = true;
             setLoading(true);
             setError(null);
             
             try {
                 const data = await fetchDiscover(mediaType, page, selectedGenre);
+                if (!isMounted) return;
                 
                 if (data.results && Array.isArray(data.results)) {
                     setMediaItems(prevItems => page === 1 ? data.results : [...prevItems, ...data.results]);
@@ -44,19 +46,23 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
                     setHasMore(false);
                 }
             } catch (err) {
+                if (!isMounted) return;
                 console.error("Error fetching media items:", err);
                 setError(`Erro ao carregar ${mediaType === 'movie' ? 'filmes' : 'séries'}. Por favor, tente novamente.`);
             } finally {
-                setLoading(false);
-                isFetchingRef.current = false;
+                if (isMounted) {
+                    setLoading(false);
+                    isFetchingRef.current = false;
+                }
             }
         };
 
-        if(hasMore && !error) {
-          getMediaItems();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, selectedGenre, mediaType]);
+        getMediaItems();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [page, selectedGenre, mediaType]); // Apenas as variáveis de controle real da busca
 
     const lastMediaItemElementRef = useCallback((node: Element | null) => {
         if (loading) return;
