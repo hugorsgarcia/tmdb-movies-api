@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import './index.scss';
 
 export default function SignupForm() {
@@ -138,9 +139,9 @@ export default function SignupForm() {
         <div className="form-footer">
           <p>
             Já tem uma conta?{' '}
-            <a href="/login" className="link">
+            <Link href="/login" className="link">
               Entrar
-            </a>
+            </Link>
           </p>
         </div>
       </form>

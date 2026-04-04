@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import './index.scss';
 
 export default function LoginForm() {
@@ -63,6 +64,12 @@ export default function LoginForm() {
           />
         </div>
 
+        <div className="form-actions">
+          <Link href="/forgot-password" className="forgot-link">
+            Esqueci minha senha
+          </Link>
+        </div>
+
         <button type="submit" className="submit-btn" disabled={isLoading}>
           {isLoading ? 'Entrando...' : 'Entrar'}
         </button>
@@ -70,9 +77,9 @@ export default function LoginForm() {
         <div className="form-footer">
           <p>
             Não tem uma conta?{' '}
-            <a href="/signup" className="link">
+            <Link href="/signup" className="link">
               Criar conta
-            </a>
+            </Link>
           </p>
         </div>
       </form>

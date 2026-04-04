@@ -1,15 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInteractions } from '@/contexts/InteractionsContext';
 import { UserProfile } from '@/types/user';
+import { MediaReview } from '@/types/interactions';
 import { useParams, useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import './page.scss';
 
 export default function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
   const { 
+    interactions,
     getAllWatchLogs, 
     getAllReviews, 
     getWatchlist, 
@@ -22,7 +25,8 @@ export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
   const username = params.username as string;
-  const [activeTab, setActiveTab] = useState<'watched' | 'reviews' | 'lists' | 'likes'>('watched');
+
+  const [activeTab, setActiveTab] = useState<'watched' | 'reviews' | 'lists' | 'likes'>('reviews');
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreateListForm, setShowCreateListForm] = useState(false);
@@ -30,57 +34,130 @@ export default function ProfilePage() {
   const [newListDescription, setNewListDescription] = useState('');
   const [listToDelete, setListToDelete] = useState<string | null>(null);
 
+  // Determinar se é o perfil do próprio usuário
+  const isOwnProfile = useMemo(() => {
+    return isAuthenticated && user?.username === username;
+  }, [isAuthenticated, user?.username, username]);
+
+  // DEV-007: useMemo para evitar chamadas repetidas no render
+  const watchLogs = useMemo(() => getAllWatchLogs(), [interactions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const reviews = useMemo(() => getAllReviews(), [interactions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const watchlist = useMemo(() => getWatchlist(), [interactions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const likes = useMemo(() => getAllLikes(), [interactions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ratings = useMemo(() => getAllRatings(), [interactions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const lists = useMemo(() => getAllLists(), [interactions]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
-    // Carregar perfil com dados reais
-    const loadProfile = () => {
-      if (!user) {
+    const loadProfile = async () => {
+      setLoading(true);
+
+      if (isOwnProfile && user) {
+        // Perfil próprio: usar dados do context
+        const currentYear = new Date().getFullYear();
+        const thisYearWatched = watchLogs.filter((log) => 
+          new Date(log.watchedDate).getFullYear() === currentYear
+        ).length;
+
+        const averageRating = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          : 0;
+
+        const recentWatched = [...watchLogs]
+          .sort((a, b) => new Date(b.watchedDate).getTime() - new Date(a.watchedDate).getTime());
+
+        const recentReviews = [...reviews]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        const realProfile: UserProfile = {
+          ...user,
+          stats: {
+            totalWatched: watchLogs.length,
+            totalReviews: reviews.length,
+            totalLists: lists.length,
+            thisYear: thisYearWatched,
+            averageRating,
+          },
+          recentWatched,
+          recentReviews,
+          lists,
+        };
+
+        setProfile(realProfile);
+        setActiveTab('watched');
         setLoading(false);
-        return;
+      } else {
+        // PM-002: Perfil de terceiros — buscar dados públicos
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('username', username)
+            .single();
+          
+          if (profileError || !profileData) {
+            setProfile(null);
+            setLoading(false);
+            return;
+          }
+
+          // Buscar reviews públicas deste usuário
+          const { data: publicReviews } = await supabase
+            .from('reviews')
+            .select('*')
+            .eq('user_id', profileData.id)
+            .order('created_at', { ascending: false });
+
+          const mappedReviews: MediaReview[] = (publicReviews || []).map((r) => ({
+            id: r.id,
+            userId: r.user_id,
+            username: profileData.username,
+            userAvatar: profileData.avatar_url,
+            mediaId: r.media_id,
+            mediaType: r.media_type,
+            mediaTitle: r.media_title,
+            posterPath: r.poster_path,
+            rating: r.rating ? Number(r.rating) : undefined,
+            reviewText: r.review_text,
+            containsSpoilers: r.contains_spoilers,
+            likes: r.likes_count,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at,
+          }));
+
+          const publicProfile: UserProfile = {
+            id: profileData.id,
+            username: profileData.username,
+            email: '',
+            displayName: profileData.display_name,
+            avatar: profileData.avatar_url,
+            bio: profileData.bio,
+            location: profileData.location,
+            website: profileData.website,
+            joinedDate: profileData.joined_date,
+            stats: {
+              totalWatched: 0,
+              totalReviews: mappedReviews.length,
+              totalLists: 0,
+              thisYear: 0,
+              averageRating: 0,
+            },
+            recentWatched: [],
+            recentReviews: mappedReviews,
+            lists: [],
+          };
+
+          setProfile(publicProfile);
+          setActiveTab('reviews');
+        } catch (err) {
+          console.error('Erro ao carregar perfil público:', err);
+          setProfile(null);
+        }
+        setLoading(false);
       }
-
-      // Obter dados reais do InteractionsContext
-      const watchLogs = getAllWatchLogs();
-      const reviews = getAllReviews();
-      const watchlist = getWatchlist();
-      const ratings = getAllRatings();
-
-      // Calcular estatísticas
-      const currentYear = new Date().getFullYear();
-      const thisYearWatched = watchLogs.filter((log: { watchedDate: string }) => 
-        new Date(log.watchedDate).getFullYear() === currentYear
-      ).length;
-
-      const averageRating = ratings.length > 0
-        ? ratings.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / ratings.length
-        : 0;
-
-      // Usar a estrutura nativa de WatchLog e MediaReview
-      const recentWatched = watchLogs
-        .sort((a, b) => new Date(b.watchedDate).getTime() - new Date(a.watchedDate).getTime());
-
-      const recentReviews = reviews
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      const realProfile: UserProfile = {
-        ...user,
-        stats: {
-          totalWatched: watchLogs.length,
-          totalReviews: reviews.length,
-          totalLists: watchlist.length, // Usando watchlist como "listas" por enquanto
-          thisYear: thisYearWatched,
-          averageRating: averageRating,
-        },
-        recentWatched,
-        recentReviews,
-        lists: getAllLists(), 
-      };
-
-      setProfile(realProfile);
-      setLoading(false);
     };
 
     loadProfile();
-  }, [user, username, getAllWatchLogs, getAllReviews, getWatchlist, getAllLikes, getAllRatings]);
+  }, [user, username, isOwnProfile, watchLogs, reviews, watchlist, likes, ratings, lists]);
 
   if (loading) {
     return (
@@ -90,13 +167,14 @@ export default function ProfilePage() {
     );
   }
 
-  if (!isAuthenticated || !profile) {
+  if (!profile) {
     return (
       <div className="profile-page">
         <div className="not-found">
-          <h1>Faça login para ver seu perfil</h1>
-          <button onClick={() => router.push('/login')} className="btn-primary">
-            Fazer Login
+          <h1>Usuário não encontrado</h1>
+          <p>O perfil @{username} não existe.</p>
+          <button onClick={() => router.push('/')} className="btn-primary">
+            Voltar ao início
           </button>
         </div>
       </div>
@@ -114,7 +192,7 @@ export default function ProfilePage() {
         <div className="profile-banner"></div>
         <div className="profile-info">
           <div className="avatar-container">
-            <img src={profile.avatar} alt={profile.displayName} className="avatar" />
+            <img src={profile.avatar} alt={`Avatar de ${profile.displayName}`} className="avatar" />
           </div>
           <div className="user-details">
             <h1>{profile.displayName}</h1>
@@ -129,62 +207,76 @@ export default function ProfilePage() {
       </div>
 
       <div className="profile-stats">
+        {isOwnProfile && (
+          <>
+            <div className="stat-item">
+              <span className="stat-number">{watchLogs.length}</span>
+              <span className="stat-label">Assistidos</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{likes.length}</span>
+              <span className="stat-label">Curtidas</span>
+            </div>
+          </>
+        )}
         <div className="stat-item">
-          <span className="stat-number">{getAllWatchLogs().length}</span>
-          <span className="stat-label">Assistidos</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-number">{getAllReviews().length}</span>
+          <span className="stat-number">{profile.stats.totalReviews}</span>
           <span className="stat-label">Avaliações</span>
         </div>
-        <div className="stat-item">
-          <span className="stat-number">{getAllLists().length}</span>
-          <span className="stat-label">Listas</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-number">{getAllLikes().length}</span>
-          <span className="stat-label">Curtidas</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-number">
-            {getAllRatings().length > 0 
-              ? (getAllRatings().reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / getAllRatings().length).toFixed(1)
-              : '0.0'}
-          </span>
-          <span className="stat-label">Média</span>
-        </div>
+        {isOwnProfile && (
+          <>
+            <div className="stat-item">
+              <span className="stat-number">{lists.length}</span>
+              <span className="stat-label">Listas</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">
+                {ratings.length > 0 
+                  ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+                  : '0.0'}
+              </span>
+              <span className="stat-label">Média</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="profile-content">
         <div className="tabs">
-          <button
-            className={activeTab === 'watched' ? 'active' : ''}
-            onClick={() => setActiveTab('watched')}
-          >
-            Assistidos
-          </button>
+          {isOwnProfile && (
+            <button
+              className={activeTab === 'watched' ? 'active' : ''}
+              onClick={() => setActiveTab('watched')}
+            >
+              Assistidos
+            </button>
+          )}
           <button
             className={activeTab === 'reviews' ? 'active' : ''}
             onClick={() => setActiveTab('reviews')}
           >
             Avaliações
           </button>
-          <button
-            className={activeTab === 'lists' ? 'active' : ''}
-            onClick={() => setActiveTab('lists')}
-          >
-            Listas
-          </button>
-          <button
-            className={activeTab === 'likes' ? 'active' : ''}
-            onClick={() => setActiveTab('likes')}
-          >
-            Curtidas
-          </button>
+          {isOwnProfile && (
+            <>
+              <button
+                className={activeTab === 'lists' ? 'active' : ''}
+                onClick={() => setActiveTab('lists')}
+              >
+                Listas
+              </button>
+              <button
+                className={activeTab === 'likes' ? 'active' : ''}
+                onClick={() => setActiveTab('likes')}
+              >
+                Curtidas
+              </button>
+            </>
+          )}
         </div>
 
         <div className="tab-content">
-          {activeTab === 'watched' && (
+          {activeTab === 'watched' && isOwnProfile && (
             <div className="watched-grid">
               {profile.recentWatched.length > 0 ? (
                 profile.recentWatched.map((movie) => (
@@ -236,13 +328,14 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {activeTab === 'lists' && (
+          {activeTab === 'lists' && isOwnProfile && (
             <div className="lists-section">
               <div className="lists-header">
                 <h3>Minhas Listas</h3>
                 <button
                   className="btn-create-list"
                   onClick={() => setShowCreateListForm(!showCreateListForm)}
+                  aria-label={showCreateListForm ? 'Cancelar criação de lista' : 'Criar nova lista'}
                 >
                   {showCreateListForm ? 'Cancelar' : '+ Nova Lista'}
                 </button>
@@ -256,6 +349,7 @@ export default function ProfilePage() {
                     value={newListName}
                     onChange={(e) => setNewListName(e.target.value)}
                     maxLength={50}
+                    aria-label="Nome da lista"
                   />
                   <textarea
                     placeholder="Descrição (opcional)"
@@ -263,6 +357,7 @@ export default function ProfilePage() {
                     onChange={(e) => setNewListDescription(e.target.value)}
                     maxLength={200}
                     rows={3}
+                    aria-label="Descrição da lista"
                   />
                   <button
                     className="btn-submit"
@@ -282,25 +377,26 @@ export default function ProfilePage() {
               )}
 
               <div className="lists-grid">
-                {getAllLists().length > 0 ? (
-                  getAllLists().map((list) => (
+                {lists.length > 0 ? (
+                  lists.map((list) => (
                     <div key={list.id} className="list-card">
                       <div className="list-header">
                         <h3>{list.name}</h3>
                         <div className="list-actions" style={{ marginLeft: 'auto' }}>
                           {listToDelete === list.id ? (
                             <div className="confirm-delete" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.8.5rem', color: 'var(--danger-color, #ff4d4d)' }}>Excluir lista?</span>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--danger-color, #ff4d4d)' }}>Excluir lista?</span>
                               <button className="btn-delete confirm-btn" style={{ color: 'var(--danger-color, #ff4d4d)' }} onClick={() => {
                                 deleteList(list.id);
                                 setListToDelete(null);
-                              }}>Sim</button>
-                              <button className="btn-delete cancel-btn" onClick={() => setListToDelete(null)}>Não</button>
+                              }} aria-label="Confirmar exclusão">Sim</button>
+                              <button className="btn-delete cancel-btn" onClick={() => setListToDelete(null)} aria-label="Cancelar exclusão">Não</button>
                             </div>
                           ) : (
                             <button
                               className="btn-delete"
                               onClick={() => setListToDelete(list.id)}
+                              aria-label={`Excluir lista ${list.name}`}
                             >
                               🗑️
                             </button>
@@ -340,15 +436,15 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {activeTab === 'likes' && (
+          {activeTab === 'likes' && isOwnProfile && (
             <div className="watched-grid">
-              {getAllLikes().length > 0 ? (
-                getAllLikes().map((like) => (
+              {likes.length > 0 ? (
+                likes.map((like) => (
                   <div key={like.id} className="movie-poster-card">
                     {like.posterPath && (
                       <img
                         src={`https://image.tmdb.org/t/p/w500${like.posterPath}`}
-                        alt={like.mediaTitle || 'Liked media'}
+                        alt={like.mediaTitle || 'Mídia curtida'}
                         onClick={() => router.push(`/${like.mediaType}/${like.mediaId}`)}
                       />
                     )}

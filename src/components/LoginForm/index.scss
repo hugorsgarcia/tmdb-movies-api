@@ -106,6 +106,23 @@
     }
   }
 
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+
+    .forgot-link {
+      color: #678;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #00c030;
+      }
+    }
+  }
+
   .form-footer {
     margin-top: 2rem;
     text-align: center;

@@ -1,0 +1,14 @@
+@use '../login/page.scss';
+
+.back-link {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--accent-primary, #00c030);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
