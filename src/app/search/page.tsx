@@ -18,12 +18,14 @@ function SearchContent() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [totalResults, setTotalResults] = useState(0);
 
   useEffect(() => {
     setResults([]);
     setPage(1);
     setHasMore(true);
     setError(null);
+    setTotalResults(0);
   }, [query, type]);
 
   useEffect(() => {
@@ -42,6 +44,7 @@ function SearchContent() {
         if (data.results && Array.isArray(data.results)) {
           setResults(prevResults => page === 1 ? data.results : [...prevResults, ...data.results]);
           setHasMore(data.page < data.total_pages);
+          if (page === 1) setTotalResults(data.total_results || 0);
         } else {
           setHasMore(false);
         }
@@ -92,7 +95,7 @@ function SearchContent() {
       <div className="search-header">
         <h1>Resultados para: &quot;{query}&quot;</h1>
         <p className="results-count">
-          {results.length} {results.length === 1 ? 'resultado' : 'resultados'} encontrados
+          {totalResults > 0 ? totalResults : results.length} {totalResults === 1 ? 'resultado' : 'resultados'} encontrados
         </p>
       </div>
 
