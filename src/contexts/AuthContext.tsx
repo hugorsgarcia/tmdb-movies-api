@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType } from '@/types/user';
+import bcrypt from 'bcryptjs';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -29,9 +30,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Simulação de login (substituir pela API real posteriormente)
       // Verificar se é um usuário já cadastrado no localStorage
       const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const existingUser = users.find((u: User & { password: string }) => u.email === email && u.password === password);
-
+      const existingUser = users.find((u: User & { password: string }) => u.email === email);
+      
+      let isMatch = false;
       if (existingUser) {
+        // Fallback temporário para dev: se não é hash Bcrypt, testar direto (old mocks)
+        if (!existingUser.password.startsWith('$2')) {
+           isMatch = existingUser.password === password;
+        } else {
+           isMatch = await bcrypt.compare(password, existingUser.password);
+        }
+      }
+
+      if (existingUser && isMatch) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password: _pwd, ...userWithoutPassword } = existingUser;
         setUser(userWithoutPassword);
@@ -60,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Username já em uso');
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10);
       const newUser: User & { password: string } = {
         id: Date.now().toString(),
         username,
@@ -68,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         avatar: `https://ui-avatars.com/api/?name=${displayName}&background=random`,
         bio: '',
         joinedDate: new Date().toISOString(),
-        password, // Armazenar senha (em produção, seria hash)
+        password: hashedPassword,
       };
 
       users.push(newUser);

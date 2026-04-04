@@ -43,3 +43,17 @@ next-env.d.ts
 
 #docs
 /docs
+
+# GSD planning (local only — contains sensitive architecture notes)
+/.planning/
+
+# GSD skills, agents and copilot config (local only — contains internal prompts)
+/.github/skills/
+/.github/agents/
+/.github/workflows/
+/.github/copilot-instructions.md
+/.github/get-shit-done/
+/.github/gsd-file-manifest.json
+
+# Audit documents (contain sensitive architecture and vulnerability details)
+/AUDIT.md
