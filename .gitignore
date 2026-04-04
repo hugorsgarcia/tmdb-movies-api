@@ -57,3 +57,5 @@ next-env.d.ts
 
 # Audit documents (contain sensitive architecture and vulnerability details)
 /AUDIT.md
+.agent
+.planning/
