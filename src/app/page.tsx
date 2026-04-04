@@ -1,5 +1,4 @@
 'use client';
-'use client';
 import { useState } from 'react';
 import MovieList from "@/components/MovieList";
 import Header from '@/components/Header';
