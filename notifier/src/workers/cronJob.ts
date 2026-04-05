@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { supabase } from '../config/supabase';
-import { sendWhatsAppMessage } from '../services/whatsapp';
+import { sendWhatsAppMessage, isRetryableError } from '../services/whatsapp';
 import { sendEmailMessage } from '../services/email';
 
 export function startCronWorker() {
@@ -10,9 +10,9 @@ export function startCronWorker() {
         try {
             console.log('Polling notifications...');
 
-            // Step 1: Atomic claim — UPDATE pending → processing, return what we claimed.
-            // Only the instance that wins this race will process the notification.
-            // Any other concurrent instance will find no rows to claim (already processing/sent).
+            // Atomic claim: UPDATE pending → processing.
+            // Only the instance that wins this race processes the notification.
+            // Any other concurrent instance (zero-downtime deploy overlap) finds 0 rows.
             const { data: claimed, error: claimError } = await supabase
                 .from('notifications')
                 .update({
@@ -35,38 +35,53 @@ export function startCronWorker() {
             console.log(`Claimed ${claimed.length} notification(s) for processing.`);
 
             for (const notif of claimed) {
-                let success = false;
+                let finalStatus = 'failed';
+                let errorLog = 'Channel delivery failed';
+                let retryable = false;
 
                 try {
                     console.log(`Processing [${notif.id}] via ${notif.channel} for ${notif.destination}`);
 
                     if (notif.channel === 'whatsapp') {
-                        success = await sendWhatsAppMessage(notif.destination, notif.body);
+                        await sendWhatsAppMessage(notif.destination, notif.body);
+                        finalStatus = 'sent';
                     } else if (notif.channel === 'email') {
-                        success = await sendEmailMessage(
+                        const ok = await sendEmailMessage(
                             notif.destination,
                             notif.title || 'CineSync Reminder',
                             notif.body
                         );
+                        finalStatus = ok ? 'sent' : 'failed';
                     } else {
                         console.error('Unknown channel:', notif.channel);
+                        errorLog = `Unknown channel: ${notif.channel}`;
                     }
                 } catch (e: any) {
-                    console.error(`Error sending notification [${notif.id}]:`, e.message);
+                    console.error(`Error sending [${notif.id}]:`, e.message);
+                    errorLog = e.message;
+                    // Transient errors (conflict 440, connection failure) → retry later
+                    retryable = isRetryableError(e);
                 }
 
-                // Step 2: Mark final status
-                const finalStatus = success ? 'sent' : 'failed';
-                await supabase
-                    .from('notifications')
-                    .update({
-                        status: finalStatus,
-                        error_log: success ? null : 'Channel delivery failed',
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', notif.id);
+                if (retryable) {
+                    // Reset to pending so the next cron cycle will retry
+                    console.log(`[${notif.id}] Transient error — resetting to pending for retry.`);
+                    await supabase
+                        .from('notifications')
+                        .update({ status: 'pending', updated_at: new Date().toISOString() })
+                        .eq('id', notif.id);
+                } else {
+                    await supabase
+                        .from('notifications')
+                        .update({
+                            status: finalStatus,
+                            error_log: finalStatus === 'sent' ? null : errorLog,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', notif.id);
 
-                console.log(`Notification [${notif.id}] marked as ${finalStatus}.`);
+                    console.log(`Notification [${notif.id}] marked as ${finalStatus}.`);
+                }
             }
         } catch (e) {
             console.error('Cron job crashed:', e);

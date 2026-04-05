@@ -145,6 +145,12 @@ export async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 }
 
+// Returns true for transient errors where the message should be retried later
+export function isRetryableError(error: any): boolean {
+    const msg = error?.message || '';
+    return msg.includes('conflict') || msg.includes('Stream Errored') || msg.includes('Connection Failure');
+}
+
 // Service function to send message
 export async function sendWhatsAppMessage(toPhone: string, text: string): Promise<boolean> {
     if (!sock) {
@@ -159,8 +165,11 @@ export async function sendWhatsAppMessage(toPhone: string, text: string): Promis
         }
         const jid = `${phone}@s.whatsapp.net`;
         
-        // Wait for connection to be active
-        await sock.waitForConnectionUpdate((u) => Promise.resolve(u.connection === 'open'));
+        // Wait for connection to be active (max 10s)
+        await Promise.race([
+            sock.waitForConnectionUpdate((u) => Promise.resolve(u.connection === 'open')),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 10000))
+        ]);
 
         // Check if number exists 
         const resultArr = await sock.onWhatsApp(jid);
@@ -171,10 +180,11 @@ export async function sendWhatsAppMessage(toPhone: string, text: string): Promis
         }
 
         await sock.sendMessage(result.jid, { text });
-        console.log(`WhatsApp message sent to ${toPhone}`);
+        console.log(`[WhatsApp] Message sent to ${toPhone}`);
         return true;
-    } catch (error) {
-        console.error('Failed to send WhatsApp message:', error);
-        return false;
+    } catch (error: any) {
+        console.error('Failed to send WhatsApp message:', error?.message || error);
+        // Re-throw so cronJob can detect retryable errors
+        throw error;
     }
 }
