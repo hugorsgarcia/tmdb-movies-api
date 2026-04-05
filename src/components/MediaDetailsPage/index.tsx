@@ -174,12 +174,10 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.closeButton} onClick={() => setIsModalOpen(false)}>×</button>
             <iframe
-              src={`https://www.youtube.com/embed/${trailerKey}`}
-              sandbox="allow-scripts allow-same-origin allow-presentation"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              src={`https://www.youtube-nocookie.com/embed/${trailerKey}?rel=0`}
+              sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
-              referrerPolicy="no-referrer"
-              loading="lazy"
               title="YouTube video player"
               style={{ border: 0 }}
             ></iframe>

@@ -49,9 +49,9 @@ const nextConfig: NextConfig = {
               isDev
                 ? "font-src 'self' data: https://fonts.gstatic.com https://use.typekit.net"
                 : "font-src 'self' data: https://use.typekit.net",
-              "img-src 'self' https://image.tmdb.org https://ui-avatars.com https://*.supabase.co data:",
-              "connect-src 'self' https://*.supabase.co",
-              "frame-src https://www.youtube.com",
+              "img-src 'self' https://image.tmdb.org https://ui-avatars.com https://*.supabase.co https://i.ytimg.com data:",
+              "connect-src 'self' https://*.supabase.co https://*.youtube-nocookie.com",
+              "frame-src https://www.youtube.com https://www.youtube-nocookie.com",
             ].join('; ')
           },
         ],
