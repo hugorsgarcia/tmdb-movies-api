@@ -99,7 +99,8 @@ export async function connectToWhatsApp() {
         const { connection, lastDisconnect, qr } = update;
         
         if (qr) {
-            console.log('QR Code generated. Accessible via GET /api/qrcode');
+            const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3001}`;
+            console.log(`[WhatsApp] QR Code generated! Scan at: ${baseUrl}/api/qrcode`);
             latestQrCode = await qrcode.toDataURL(qr);
         }
 
