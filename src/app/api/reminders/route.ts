@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase-server';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
-    const supabase = await supabaseServer();
-    
     // Check authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();
     if (authError || !session?.user) {
@@ -12,7 +10,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { channel, destination, title, messageBody, scheduledAt, mediaId, mediaType } = body;
+    const { channel, destination, title, messageBody, scheduledAt } = body;
 
     // Basic validation
     if (!channel || !destination || !messageBody || !scheduledAt) {
@@ -27,16 +25,13 @@ export async function POST(request: Request) {
       title,
       body: messageBody,
       scheduled_at: scheduledAt,
-      status: 'pending' // Default status
+      status: 'pending'
     });
 
     if (insertError) {
       console.error('Error inserting notification:', insertError);
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
-
-    // Also trace it conceptually back to the media for history
-    // We could save it in watch_logs or just a separate API if we queried later
 
     return NextResponse.json({ success: true }, { status: 201 });
 
