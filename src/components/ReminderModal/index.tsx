@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchStreamingProviders } from '@/utils/tmdb';
+import { supabase } from '@/lib/supabase';
 import './index.scss';
 
 interface StreamingProvider {
@@ -65,17 +66,22 @@ export function ReminderModal({
       // Make sure date is in ISO string formatted correctly in localtime
       const isoDate = new Date(scheduledAt).toISOString();
 
+      // Get the user's access token to authenticate the API call
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       const res = await fetch('/api/reminders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+        },
         body: JSON.stringify({
           channel,
           destination,
           title: mediaTitle,
           messageBody,
           scheduledAt: isoDate,
-          mediaId,
-          mediaType
         })
       });
 

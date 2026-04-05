@@ -3,9 +3,17 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
   try {
-    // Check authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    if (authError || !session?.user) {
+    // Read the Bearer token sent by the client
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Validate the token with Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -19,7 +27,7 @@ export async function POST(request: Request) {
 
     // Insert into notifications queue
     const { error: insertError } = await supabase.from('notifications').insert({
-      user_id: session.user.id,
+      user_id: user.id,
       channel,
       destination,
       title,
