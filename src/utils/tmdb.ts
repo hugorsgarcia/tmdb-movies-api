@@ -26,13 +26,14 @@ export const fetchGenres = async (mediaType: 'movie' | 'tv') => {
 export const fetchDiscover = async (
   mediaType: 'movie' | 'tv',
   page: number,
-  genreId?: number | null
+  genreId?: number | null,
+  options?: { signal?: AbortSignal }
 ) => {
   const params: Record<string, number> = { page };
   if (genreId) {
     params.with_genres = genreId;
   }
-  const response = await tmdbApi.get(`/discover/${mediaType}`, { params });
+  const response = await tmdbApi.get(`/discover/${mediaType}`, { params, signal: options?.signal });
   return response.data || { results: [] };
 };
 
@@ -59,15 +60,10 @@ export const searchMedia = async (
   return response.data || { results: [] };
 };
 
-// Funções auxiliares para chamadas diretas Server Side (SSR/SSG Sem Proxy)
-export const fetchMediaDirect = async (mediaType: 'movie' | 'tv', id: string) => {
-  const apiKey = process.env.TMDB_API_KEY;
-  if (!apiKey) {
-    throw new Error('TMDB_API_KEY lacks in environment variables');
-  }
-  const response = await fetch(`https://api.themoviedb.org/3/${mediaType}/${id}?api_key=${apiKey}&language=pt-BR`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${mediaType} ${id} details`);
-  }
-  return response.json();
+export const fetchStreamingProviders = async (mediaType: 'movie' | 'tv', id: string) => {
+  const response = await tmdbApi.get(`/${mediaType}/${id}/watch/providers`);
+  return response.data?.results ?? {};
 };
+
+// DEV-001: fetchMediaDirect removed — use fetchMediaDetailsServer (tmdb-server.ts) instead.
+// That function includes ISR caching (revalidate: 3600) and is the canonical SSR fetcher.

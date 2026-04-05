@@ -20,7 +20,6 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const observer = useRef<IntersectionObserver | null>(null);
-    const isFetchingRef = useRef(false);
 
     useEffect(() => {
         setMediaItems([]);
@@ -30,41 +29,32 @@ export default function MovieList({ selectedGenre, mediaType }: Props) {
     }, [selectedGenre, mediaType]);
 
     useEffect(() => {
-        let isMounted = true;
-        const getMediaItems = async () => {
-            if (isFetchingRef.current) return;
-            isFetchingRef.current = true;
-            setLoading(true);
-            setError(null);
-            
-            try {
-                const data = await fetchDiscover(mediaType, page, selectedGenre);
-                if (!isMounted) return;
-                
+        const controller = new AbortController();
+        setLoading(true);
+        setError(null);
+
+        fetchDiscover(mediaType, page, selectedGenre, { signal: controller.signal })
+            .then(data => {
                 if (data.results && Array.isArray(data.results)) {
                     setMediaItems(prevItems => page === 1 ? data.results : [...prevItems, ...data.results]);
                     setHasMore(data.page < data.total_pages);
                 } else {
                     setHasMore(false);
                 }
-            } catch (err) {
-                if (!isMounted) return;
+            })
+            .catch(err => {
+                if (controller.signal.aborted) return;
                 console.error("Error fetching media items:", err);
                 setError(`Erro ao carregar ${mediaType === 'movie' ? 'filmes' : 'séries'}. Por favor, tente novamente.`);
-            } finally {
-                if (isMounted) {
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
                     setLoading(false);
-                    isFetchingRef.current = false;
                 }
-            }
-        };
+            });
 
-        getMediaItems();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [page, selectedGenre, mediaType]); // Apenas as variáveis de controle real da busca
+        return () => controller.abort();
+    }, [page, selectedGenre, mediaType]);
 
     const lastMediaItemElementRef = useCallback((node: Element | null) => {
         if (loading) return;

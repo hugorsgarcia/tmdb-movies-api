@@ -4,7 +4,6 @@ import { MediaItem } from "@/types/media";
 import StarRating from "../StarRating";
 import QuickActions from "../QuickActions";
 import './index.scss';
-import Image from "next/image";
 import React, { useState } from "react";
 import { getPosterUrl } from "@/utils/tmdb";
 import WatchLogModal from "../WatchLogModal";
@@ -15,9 +14,10 @@ export interface Props {
     mediaType: 'movie' | 'tv';
 }
 
-const MediaCard = React.forwardRef<HTMLLIElement, Props>(({
-    mediaItem, mediaType
-}, ref) => {
+const MediaCard = React.forwardRef<HTMLLIElement, Props>((
+    { mediaItem, mediaType },
+    ref
+) => {
     const [isWatchLogModalOpen, setIsWatchLogModalOpen] = useState(false);
     const [isListModalOpen, setIsListModalOpen] = useState(false);
     const title = mediaType === 'movie' ? mediaItem.title : mediaItem.name;
@@ -29,12 +29,14 @@ const MediaCard = React.forwardRef<HTMLLIElement, Props>(({
             <li className="movie-card" ref={ref}>
                 <div className="poster-container">
                    {posterUrl ? (
-                     <Image 
+                     <img 
                        src={posterUrl} 
                        alt={title || ''}
                        className="movie-poster" 
                        width={300} 
                        height={450}
+                       loading="eager"
+                       decoding="sync"
                      />
                    ) : (
                      <div className="movie-poster-placeholder">
