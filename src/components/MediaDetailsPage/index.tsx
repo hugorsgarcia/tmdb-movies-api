@@ -9,6 +9,7 @@ import WatchLogModal from '@/components/WatchLogModal';
 import ReviewModal from '@/components/ReviewModal';
 import ReviewCard from '@/components/ReviewCard';
 import AddToListModal from '@/components/AddToListModal';
+import { ReminderModal } from '@/components/ReminderModal';
 import ErrorMessage from '@/components/ErrorMessage';
 import StreamingProviders from '@/components/StreamingProviders';
 import { useMediaDetails } from '@/hooks/useMediaDetails';
@@ -38,6 +39,7 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
   const [isWatchLogModalOpen, setIsWatchLogModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isListModalOpen, setIsListModalOpen] = useState(false);
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -133,11 +135,18 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
 
           <StreamingProviders mediaType={mediaType} id={id} />
 
-          {trailerKey && (
-            <button className={styles.trailerButton} onClick={() => setIsModalOpen(true)}>
-              Assistir Trailer
-            </button>
-          )}
+          <div className={styles.actionButtons}>
+            {trailerKey && (
+              <button className={styles.trailerButton} onClick={() => setIsModalOpen(true)}>
+                Assistir Trailer
+              </button>
+            )}
+            {isAuthenticated && (
+              <button className={styles.trailerButton} style={{ marginLeft: '10px', background: '#3b82f6' }} onClick={() => setIsReminderModalOpen(true)}>
+                ⏰ Lembrar-me
+              </button>
+            )}
+          </div>
 
           <p className={styles.overview}>{mediaData.overview}</p>
 
@@ -211,6 +220,15 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
         mediaTitle={title || ''}
         posterPath={mediaData.poster_path}
       />
+
+      {isReminderModalOpen && (
+        <ReminderModal
+          mediaId={id}
+          mediaType={mediaType}
+          mediaTitle={title || ''}
+          onClose={() => setIsReminderModalOpen(false)}
+        />
+      )}
     </div>
   );
 };
