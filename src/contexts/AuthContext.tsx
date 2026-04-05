@@ -35,26 +35,55 @@ function clearRateLimit(email: string): void {
 }
 
 // ===== Helper: mapear profile do Supabase para tipo User =====
-async function fetchUserProfile(userId: string): Promise<User | null> {
+// Falls back to auth-user metadata so login never silently fails when
+// the profiles row is missing (e.g. trigger not yet applied).
+interface AuthUserMeta {
+  username?: string;
+  display_name?: string;
+  email?: string;
+  avatar_url?: string;
+  created_at?: string;
+}
+
+async function fetchUserProfile(userId: string, fallback?: AuthUserMeta): Promise<User | null> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    // DBA-001: Explicit column selection — avoids over-fetching
+    .select('id, username, email, display_name, avatar_url, bio, location, website, joined_date')
     .eq('id', userId)
     .single();
 
-  if (error || !data) return null;
+  if (!error && data) {
+    return {
+      id: data.id,
+      username: data.username,
+      email: data.email,
+      displayName: data.display_name,
+      avatar: data.avatar_url,
+      bio: data.bio || '',
+      location: data.location,
+      website: data.website,
+      joinedDate: data.joined_date,
+    };
+  }
 
-  return {
-    id: data.id,
-    username: data.username,
-    email: data.email,
-    displayName: data.display_name,
-    avatar: data.avatar_url,
-    bio: data.bio || '',
-    location: data.location,
-    website: data.website,
-    joinedDate: data.joined_date,
-  };
+  // profiles row missing — build a minimal User from auth metadata so the
+  // user is still recognised as authenticated while the DB catches up.
+  if (fallback) {
+    const username = fallback.username
+      || fallback.email?.split('@')[0]
+      || userId.slice(0, 8);
+    return {
+      id: userId,
+      username,
+      email: fallback.email ?? '',
+      displayName: fallback.display_name || username,
+      avatar: fallback.avatar_url,
+      joinedDate: fallback.created_at ?? new Date().toISOString(),
+    };
+  }
+
+  return null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -67,7 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
+        const u = session.user;
+        const profile = await fetchUserProfile(u.id, {
+          username: u.user_metadata?.username,
+          display_name: u.user_metadata?.display_name,
+          email: u.email,
+          avatar_url: u.user_metadata?.avatar_url,
+          created_at: u.created_at,
+        });
         setUser(profile);
       }
       setLoading(false);
@@ -75,14 +111,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initSession();
 
-    // Escutar mudanças de autenticação
+    // Escutar mudanças de autenticação — apenas SIGNED_OUT precisa de handler
+    // explícito aqui; SIGNED_IN é tratado pelo próprio login() / signup() para
+    // evitar corrida de condição com dois fetchUserProfile simultâneos.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const profile = await fetchUserProfile(session.user.id);
-          setUser(profile);
-        } else if (event === 'SIGNED_OUT') {
+        if (event === 'SIGNED_OUT') {
           setUser(null);
+        } else if (event === 'INITIAL_SESSION' && session?.user) {
+          // Fired synchronously with stored session on first load — handled by initSession above
+          // but may fire before initSession resolves; use it as a safety net.
+          const u = session.user;
+          const profile = await fetchUserProfile(u.id, {
+            username: u.user_metadata?.username,
+            display_name: u.user_metadata?.display_name,
+            email: u.email,
+            avatar_url: u.user_metadata?.avatar_url,
+            created_at: u.created_at,
+          });
+          setUser(profile);
+          setLoading(false);
         }
       }
     );
@@ -93,7 +141,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
+    // NOTE: do NOT set the global `loading` here — that is reserved for the
+    // initial session check. Each form manages its own loading state locally.
     try {
       // Rate limit client-side (SEC-004 — dupla camada)
       checkRateLimit(email);
@@ -118,19 +167,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearRateLimit(email);
 
       if (data.user) {
-        const profile = await fetchUserProfile(data.user.id);
+        const u = data.user;
+        const profile = await fetchUserProfile(u.id, {
+          username: u.user_metadata?.username,
+          display_name: u.user_metadata?.display_name,
+          email: u.email,
+          avatar_url: u.user_metadata?.avatar_url,
+          created_at: u.created_at,
+        });
         setUser(profile);
       }
     } catch (error) {
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
   const signup = async (username: string, email: string, password: string, displayName: string) => {
-    setLoading(true);
     try {
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -138,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             username,
             display_name: displayName,
-            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`,
+            avatar_url: avatarUrl,
           },
         },
       });
@@ -151,15 +205,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(error.message);
       }
 
-      // Verificar se username já existe (unique constraint)
       if (data.user) {
-        const profile = await fetchUserProfile(data.user.id);
+        const u = data.user;
+        // Attempt to insert the profiles row (requires INSERT policy or trigger).
+        // Silently ignored if the trigger already created the row.
+        await supabase.from('profiles').upsert({
+          id: u.id,
+          username,
+          email,
+          display_name: displayName,
+          avatar_url: avatarUrl,
+          joined_date: new Date().toISOString(),
+        }, { onConflict: 'id', ignoreDuplicates: true });
+
+        const profile = await fetchUserProfile(u.id, {
+          username,
+          display_name: displayName,
+          email,
+          avatar_url: avatarUrl,
+          created_at: u.created_at,
+        });
         setUser(profile);
       }
     } catch (error) {
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 

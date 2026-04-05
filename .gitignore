@@ -59,3 +59,5 @@ next-env.d.ts
 /AUDIT.md
 .agent
 .planning/
+cinesync_feature_roadmap.md
+cinesync_audit_v2.md

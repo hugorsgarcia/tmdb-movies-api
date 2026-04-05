@@ -11,11 +11,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const movie = await fetchMediaDetailsServer('movie', id);
 
   if (!movie) {
-    return { title: 'Filme não encontrado — MyLetterboxd' };
+    return { title: 'Filme não encontrado — CineSync' };
   }
 
   return {
-    title: `${movie.title} — MyLetterboxd`,
+    title: `${movie.title} — CineSync`,
     description: movie.overview || `Detalhes sobre ${movie.title}`,
     openGraph: {
       title: movie.title,

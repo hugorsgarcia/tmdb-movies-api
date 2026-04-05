@@ -29,7 +29,8 @@ export default function SettingsPage() {
       if (!user) return;
       const { data } = await supabase
         .from('profiles')
-        .select('*')
+        // DBA-001: Only fetch columns used in this form
+        .select('display_name, bio, location, website')
         .eq('id', user.id)
         .single();
 

@@ -1,5 +1,5 @@
 {
-  "name": "tmdb-movies-api",
+  "name": "cinesync",
   "version": "0.1.0",
   "private": true,
   "scripts": {
