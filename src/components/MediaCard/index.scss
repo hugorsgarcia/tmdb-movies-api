@@ -58,6 +58,7 @@
         justify-content: flex-end;
         padding: 10px;
         z-index: 1;
+        transition: opacity 0.3s;
         
 
         .movie-title {
@@ -80,6 +81,32 @@
 
         .card-actions-overlay {
             opacity: 1;
+        }
+
+        /* BUG-002: hide ghost title text when overlay is active */
+        .movie-infos {
+            opacity: 0;
+        }
+    }
+}
+
+/* BUG-013: always show overlay on touch devices */
+@media (hover: none) {
+    .movie-card {
+        .card-actions-overlay {
+            opacity: 1;
+            background: linear-gradient(
+                to top,
+                rgba(0, 0, 0, 0.85) 0%,
+                rgba(0, 0, 0, 0.3) 50%,
+                transparent 100%
+            );
+            align-items: flex-end;
+            padding-bottom: 0.5rem;
+        }
+
+        .movie-infos {
+            display: none;
         }
     }
 }

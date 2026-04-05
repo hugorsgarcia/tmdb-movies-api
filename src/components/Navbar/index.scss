@@ -2,7 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 0.75rem 1rem;
   background-color: rgba(21, 24, 34, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -11,12 +11,42 @@
   position: sticky;
   top: 0;
   z-index: 1000;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  /* Mobile: 2 linhas — row1: logo+toggle+avatar, row2: search */
+  @media (max-width: 639px) {
+    padding: 0.5rem 0.75rem;
+    row-gap: 0.5rem;
+  }
 }
 
 .navbar-left, .navbar-center, .navbar-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+.navbar-left {
+  @media (max-width: 639px) {
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+}
+
+.navbar-center {
+  @media (max-width: 639px) {
+    order: 3;
+    width: 100%;
+    gap: 0;
+  }
+}
+
+.navbar-right {
+  @media (max-width: 639px) {
+    gap: 0.5rem;
+    margin-left: auto;
+  }
 }
 
 .logo {
@@ -64,6 +94,11 @@
       color: white;
       font-weight: 600;
     }
+
+    @media (max-width: 639px) {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.85rem;
+    }
   }
 }
 
@@ -72,6 +107,10 @@
   width: 300px;
   display: flex;
   align-items: center;
+
+  @media (max-width: 639px) {
+    width: 100%;
+  }
 
   input {
     width: 100%;
@@ -102,6 +141,11 @@
     font-size: 1.2rem;
     cursor: pointer;
     padding: 0.3rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
     transition: transform 0.2s;
 
     &:hover {
@@ -153,21 +197,6 @@
   align-items: center;
   gap: 0.75rem;
 
-  .feed-link {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary, #9ab);
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding: 0.4rem 0.75rem;
-    border-radius: 4px;
-    transition: color 0.2s;
-
-    &:hover {
-      color: var(--text-primary, #fff);
-    }
-  }
-
   .user-button {
     display: flex;
     align-items: center;
@@ -210,6 +239,35 @@
     .user-name {
       font-size: 0.95rem;
       font-weight: 500;
+
+      @media (max-width: 639px) {
+        display: none;
+      }
+    }
+  }
+
+  .feed-link {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #9ab);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    @media (max-width: 639px) {
+      font-size: 1.1rem;
+      padding: 0.25rem 0.5rem;
+    }
+
+    &:hover {
+      color: var(--text-primary, #fff);
     }
   }
 

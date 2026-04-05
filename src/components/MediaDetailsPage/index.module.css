@@ -272,3 +272,59 @@
     margin: 1rem 0 0;
   }
 }
+
+/* BUG-011: Back button */
+.backButton {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.2s;
+}
+
+.backButton:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+/* BUG-003 / BUG-008 / BUG-012: Mobile overrides */
+@media (max-width: 639px) {
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .backdrop {
+    min-height: 240px;
+  }
+
+  .content {
+    margin-top: -80px;
+    padding: 1rem;
+  }
+
+  .poster {
+    width: 140px;
+    height: 210px;
+  }
+
+  .userRating {
+    flex-direction: row;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .modalContent {
+    width: 95%;
+  }
+}

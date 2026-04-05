@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import StarRating from '@/components/StarRating';
 import InteractiveStarRating from '@/components/InteractiveStarRating';
@@ -35,6 +36,7 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
   const { isAuthenticated } = useAuth();
   const { getRating, setRating, getReview } = useInteractions();
   
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWatchLogModalOpen, setIsWatchLogModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -78,7 +80,11 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
       <div 
         className={styles.backdrop}
         style={{ backgroundImage: `url(${getBackdropUrl(mediaData.backdrop_path)})` }}
-      ></div>
+      >
+        <button className={styles.backButton} onClick={() => router.back()}>
+          ← Voltar
+        </button>
+      </div>
 
       <div className={styles.content}>
         <Image 
