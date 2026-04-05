@@ -10,16 +10,16 @@ app.use(cors());
 app.use(express.json());
 
 // Main healthcheck endpoints used by platforms like Render
-app.get('/health', (req, res) => {
+app.get('/health', (req: any, res: any) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.get('/', (req, res) => {
+app.get('/', (req: any, res: any) => {
     res.send('CineSync Notifier Microservice is running');
 });
 
 // Endpoint to display QR Code for Baileys auth
-app.get('/api/qrcode', (req, res) => {
+app.get('/api/qrcode', (req: any, res: any) => {
     if (latestQrCode) {
         res.send(`
             <html>
@@ -44,19 +44,21 @@ app.get('/api/qrcode', (req, res) => {
 });
 
 // Start services
-async function bootstrap() {
+function bootstrap() {
     console.log('Initializing CineSync Notifier...');
-    
-    // Connect WhatsApp
-    await connectToWhatsApp();
-    
-    // Start Cron polling
+
+    // FIX: Start cron worker FIRST — independently of WhatsApp connection state.
+    // This ensures pending notifications are polled even if WhatsApp is reconnecting.
     startCronWorker();
 
+    // Listen for HTTP requests (QR code page, healthcheck)
     app.listen(port, () => {
         console.log(`Microservice listening on port ${port}`);
         console.log(`To scan QR Code, visit http://localhost:${port}/api/qrcode`);
     });
+
+    // Connect WhatsApp in background — non-blocking
+    connectToWhatsApp().catch(console.error);
 }
 
-bootstrap().catch(console.error);
+bootstrap();

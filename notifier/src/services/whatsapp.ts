@@ -79,6 +79,7 @@ async function useSupabaseAuthState(sessionId: string): Promise<{ state: Authent
 
 let sock: ReturnType<typeof makeWASocket> | null = null;
 export let latestQrCode: string | null = null;
+let reconnectAttempts = 0;
 
 // Initialize WhatsApp connection
 export async function connectToWhatsApp() {
@@ -94,30 +95,48 @@ export async function connectToWhatsApp() {
         browser: Browsers.macOS('Desktop')
     });
 
-    sock.ev.on('connection.update', async (update) => {
+    sock.ev.on('connection.update', async (update: any) => {
         const { connection, lastDisconnect, qr } = update;
         
         if (qr) {
             console.log('QR Code generated. Accessible via GET /api/qrcode');
-            // Store QR as base64 image
             latestQrCode = await qrcode.toDataURL(qr);
         }
 
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Connection closed due to', lastDisconnect?.error, ', reconnecting:', shouldReconnect);
-            if (shouldReconnect) {
-                // reconnect if not logged out
-                connectToWhatsApp();
-            } else {
-                // logged out, wipe session
-                console.log('Logged out. Wiping session...');
+            const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+            const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+            const isConflict = statusCode === 440;
+
+            if (isConflict) {
+                // Another instance connected with the same session.
+                // Stop reconnecting — this is a multi-instance conflict.
+                console.warn('[WhatsApp] Stream conflict (440): Another instance is using this session. Waiting 30s before retrying...');
+                setTimeout(() => {
+                    reconnectAttempts = 0;
+                    connectToWhatsApp();
+                }, 30000);
+                return;
+            }
+
+            if (isLoggedOut) {
+                console.log('[WhatsApp] Logged out. Wiping session...');
                 await supabase.from('whatsapp_sessions').delete().like('id', 'cinesync-%');
                 latestQrCode = null;
-                connectToWhatsApp(); // Start fresh
+                reconnectAttempts = 0;
+                connectToWhatsApp();
+                return;
             }
+
+            // Generic reconnection with exponential backoff
+            reconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 60000);
+            console.log(`[WhatsApp] Connection closed (status ${statusCode}). Reconnecting in ${delay/1000}s... (attempt #${reconnectAttempts})`);
+            setTimeout(() => connectToWhatsApp(), delay);
+
         } else if (connection === 'open') {
-            console.log('WhatsApp connection opened!');
+            reconnectAttempts = 0;
+            console.log('[WhatsApp] Connection opened successfully!');
             latestQrCode = null;
         }
     });
