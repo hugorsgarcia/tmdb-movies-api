@@ -1,4 +1,4 @@
-@import '../WatchLogModal/index.scss';
+@use '../WatchLogModal/index.scss' as *;
 
 .review-modal {
   @extend .watch-log-modal;

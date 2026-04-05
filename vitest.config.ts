@@ -6,8 +6,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    setupFiles: ['./vitest.setup.ts'],
     globals: true,
-    setupFiles: ['./src/tests/setup.ts'],
+    exclude: ['node_modules', '.next', 'tests-e2e'],
+  },
+  resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },

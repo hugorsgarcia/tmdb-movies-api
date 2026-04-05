@@ -1,4 +1,4 @@
-@import '../LoginForm/index.scss';
+@use '../LoginForm/index.scss' as *;
 
 .signup-form {
   max-width: 500px;

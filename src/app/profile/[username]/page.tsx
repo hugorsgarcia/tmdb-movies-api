@@ -294,7 +294,12 @@ export default function ProfilePage() {
                   </div>
                 ))
               ) : (
-                <p className="empty-state">Nenhum filme assistido ainda</p>
+                <div className="empty-state">
+                  <div className="empty-icon">🎬</div>
+                  <h3>Nenhum filme assistido ainda</h3>
+                  <p>Procure por filmes e adicione ao seu diário de mídia!</p>
+                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar TMDB</button>
+                </div>
               )}
             </div>
           )}
@@ -323,7 +328,12 @@ export default function ProfilePage() {
                   </div>
                 ))
               ) : (
-                <p className="empty-state">Nenhuma avaliação ainda</p>
+                <div className="empty-state">
+                  <div className="empty-icon">📝</div>
+                  <h3>Nenhuma avaliação ainda</h3>
+                  <p>Compartilhe suas opiniões sobre os filmes que você assistiu!</p>
+                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar TMDB</button>
+                </div>
               )}
             </div>
           )}
@@ -430,7 +440,12 @@ export default function ProfilePage() {
                     </div>
                   ))
                 ) : (
-                  <p className="empty-state">Nenhuma lista criada ainda. Crie sua primeira lista!</p>
+                  <div className="empty-state">
+                    <div className="empty-icon">📋</div>
+                    <h3>Nenhuma lista criada</h3>
+                    <p>Crie sua primeira lista para organizar seus filmes favoritos!</p>
+                    <button className="btn-primary" onClick={() => setShowCreateListForm(true)}>Criar Nova Lista</button>
+                  </div>
                 )}
               </div>
             </div>
@@ -454,7 +469,12 @@ export default function ProfilePage() {
                   </div>
                 ))
               ) : (
-                <p className="empty-state">Nenhum filme curtido ainda</p>
+                <div className="empty-state">
+                  <div className="empty-icon">❤️</div>
+                  <h3>Nenhum filme curtido ainda</h3>
+                  <p>Curta os filmes para eles aparecerem aqui.</p>
+                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar TMDB</button>
+                </div>
               )}
             </div>
           )}
