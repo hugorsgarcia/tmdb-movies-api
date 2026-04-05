@@ -10,6 +10,7 @@ import ReviewModal from '@/components/ReviewModal';
 import ReviewCard from '@/components/ReviewCard';
 import AddToListModal from '@/components/AddToListModal';
 import ErrorMessage from '@/components/ErrorMessage';
+import StreamingProviders from '@/components/StreamingProviders';
 import { useMediaDetails } from '@/hooks/useMediaDetails';
 import { useAuth } from '@/contexts/AuthContext';
 import { useInteractions } from '@/contexts/InteractionsContext';
@@ -20,6 +21,13 @@ interface MediaDetailsPageProps {
   mediaType: 'movie' | 'tv';
   id: string;
 }
+
+// DEV-006: Moved to module level — no need to recreate on every render
+const formatRuntime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${mins}m`;
+};
 
 const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
   const { mediaData, trailerKey, loading, error, retry } = useMediaDetails(mediaType, id);
@@ -47,12 +55,6 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
   if (!mediaData) {
     return <ErrorMessage message="Conteúdo não encontrado." />;
   }
-
-  const formatRuntime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
 
   const title = mediaType === 'movie' ? mediaData.title : mediaData.name;
   const releaseDate = mediaType === 'movie' ? mediaData.release_date : mediaData.first_air_date;
@@ -91,7 +93,7 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
           
           <div className={styles.rating}>
             <StarRating rating={mediaData.vote_average} />
-            <span>{mediaData.vote_average?.toFixed(1)} (TMDB)</span>
+            <span>{mediaData.vote_average?.toFixed(1)} (Nota da comunidade)</span>
           </div>
 
           {isAuthenticated && (
@@ -128,6 +130,8 @@ const MediaDetailsPage = ({ mediaType, id }: MediaDetailsPageProps) => {
               <span key={genre.id} className={styles.genre}>{genre.name}</span>
             ))}
           </div>
+
+          <StreamingProviders mediaType={mediaType} id={id} />
 
           {trailerKey && (
             <button className={styles.trailerButton} onClick={() => setIsModalOpen(true)}>

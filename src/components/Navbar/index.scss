@@ -149,6 +149,24 @@
 
 .user-menu {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .feed-link {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #9ab);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--text-primary, #fff);
+    }
+  }
 
   .user-button {
     display: flex;

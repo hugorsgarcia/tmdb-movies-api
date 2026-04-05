@@ -87,6 +87,13 @@ export default function Navbar() {
       <div className="navbar-right">
         {isAuthenticated && user ? (
           <div className="user-menu" ref={menuRef}>
+            <button
+              className="feed-link"
+              onClick={() => router.push('/feed')}
+              aria-label="Ver feed de atividades"
+            >
+              📰 Feed
+            </button>
             <button 
               className="user-button"
               onClick={() => setShowUserMenu(!showUserMenu)}

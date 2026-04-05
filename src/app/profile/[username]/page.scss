@@ -92,6 +92,39 @@
           color: #9ab;
           font-size: 0.9rem;
         }
+
+        .btn-follow {
+          display: inline-block;
+          margin-top: 1rem;
+          padding: 0.5rem 1.5rem;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          border: 2px solid #00c030;
+          background: #00c030;
+          color: #14181c;
+          transition: all 0.2s;
+
+          &:hover:not(:disabled) {
+            background: #00d435;
+            border-color: #00d435;
+          }
+
+          &.btn-following {
+            background: transparent;
+            color: #00c030;
+
+            &:hover:not(:disabled) {
+              background: rgba(0, 192, 48, 0.1);
+            }
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+        }
       }
     }
   }
@@ -286,9 +319,33 @@
 
             .review-meta {
               display: flex;
+              align-items: center;
               gap: 1.5rem;
               color: #9ab;
               font-size: 0.9rem;
+
+              .review-like-btn {
+                background: transparent;
+                border: none;
+                color: #9ab;
+                font-size: 0.9rem;
+                cursor: pointer;
+                padding: 0;
+                transition: color 0.15s;
+
+                &.liked {
+                  color: #e05;
+                }
+
+                &:hover:not(:disabled) {
+                  color: #e05;
+                }
+
+                &:disabled {
+                  cursor: default;
+                  opacity: 0.6;
+                }
+              }
             }
           }
         }

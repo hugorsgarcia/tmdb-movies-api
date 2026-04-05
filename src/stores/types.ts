@@ -61,7 +61,7 @@ export interface ListsSlice {
 
 export interface SharedSlice {
   loading: boolean;
-  loadInteractions: (userId: string) => Promise<void>;
+  loadInteractions: (userId: string, username?: string) => Promise<void>;
   clearInteractions: () => void;
 }
 

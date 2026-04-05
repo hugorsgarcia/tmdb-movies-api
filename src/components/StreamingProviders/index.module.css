@@ -1,0 +1,50 @@
+.container {
+  margin-top: 1rem;
+}
+
+.title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #aaa);
+  margin-bottom: 0.6rem;
+}
+
+.providerRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--text-muted, #aaa);
+  min-width: 70px;
+}
+
+.logos {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.tmdbLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--accent-color, #e50914);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

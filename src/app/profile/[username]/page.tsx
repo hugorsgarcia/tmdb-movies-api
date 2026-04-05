@@ -7,6 +7,8 @@ import { UserProfile } from '@/types/user';
 import { MediaReview } from '@/types/interactions';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useFollow } from '@/hooks/useFollow';
+import { useReviewLikes } from '@/hooks/useReviewLikes';
 import './page.scss';
 
 export default function ProfilePage() {
@@ -38,6 +40,17 @@ export default function ProfilePage() {
   const isOwnProfile = useMemo(() => {
     return isAuthenticated && user?.username === username;
   }, [isAuthenticated, user?.username, username]);
+
+  // Follow state for public profiles (hook is no-op when profile.id is null)
+  const followTargetId = !isOwnProfile && profile ? profile.id : null;
+  const { isFollowing, followerCount, followingCount, loading: followLoading, toggle: toggleFollow } = useFollow(followTargetId);
+
+  // Review like state — track which reviews the current user has liked
+  const reviewIds = useMemo(() => profile?.recentReviews.map((r) => r.id) ?? [], [profile?.recentReviews]);
+  const { isLiked: isReviewLiked, toggleLike: toggleReviewLike } = useReviewLikes(reviewIds);
+  const [likeCounts, setLikeCounts] = useState<Map<string, number>>(new Map());
+  const getLikeCount = (reviewId: string, defaultCount: number) =>
+    likeCounts.has(reviewId) ? (likeCounts.get(reviewId) as number) : defaultCount;
 
   // DEV-007: useMemo para evitar chamadas repetidas no render
   const watchLogs = useMemo(() => getAllWatchLogs(), [interactions]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -90,7 +103,8 @@ export default function ProfilePage() {
         try {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('*')
+            // DBA-001: Explicit column selection
+            .select('id, username, display_name, avatar_url, bio, location, website, joined_date')
             .eq('username', username)
             .single();
           
@@ -103,7 +117,8 @@ export default function ProfilePage() {
           // Buscar reviews públicas deste usuário
           const { data: publicReviews } = await supabase
             .from('reviews')
-            .select('*')
+            // DBA-001: Explicit column selection
+            .select('id, user_id, media_id, media_type, media_title, poster_path, rating, review_text, contains_spoilers, likes_count, created_at, updated_at')
             .eq('user_id', profileData.id)
             .order('created_at', { ascending: false });
 
@@ -202,6 +217,16 @@ export default function ProfilePage() {
               {profile.location && <span>📍 {profile.location}</span>}
               <span>📅 Entrou em {formatDate(profile.joinedDate)}</span>
             </div>
+            {!isOwnProfile && isAuthenticated && (
+              <button
+                className={`btn-follow ${isFollowing ? 'btn-following' : ''}`}
+                onClick={toggleFollow}
+                disabled={followLoading}
+                aria-label={isFollowing ? 'Deixar de seguir' : 'Seguir'}
+              >
+                {isFollowing ? 'Seguindo' : 'Seguir'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -222,6 +247,14 @@ export default function ProfilePage() {
         <div className="stat-item">
           <span className="stat-number">{profile.stats.totalReviews}</span>
           <span className="stat-label">Avaliações</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-number">{followerCount}</span>
+          <span className="stat-label">Seguidores</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-number">{followingCount}</span>
+          <span className="stat-label">Seguindo</span>
         </div>
         {isOwnProfile && (
           <>
@@ -298,7 +331,7 @@ export default function ProfilePage() {
                   <div className="empty-icon">🎬</div>
                   <h3>Nenhum filme assistido ainda</h3>
                   <p>Procure por filmes e adicione ao seu diário de mídia!</p>
-                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar TMDB</button>
+                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar CineSync</button>
                 </div>
               )}
             </div>
@@ -322,7 +355,20 @@ export default function ProfilePage() {
                       <p className="review-text">{review.reviewText}</p>
                       <div className="review-meta">
                         <span>{formatDate(review.createdAt)}</span>
-                        <span>❤️ {review.likes}</span>
+                        <button
+                          className={`review-like-btn ${isReviewLiked(review.id) ? 'liked' : ''}`}
+                          onClick={() =>
+                            toggleReviewLike(
+                              review.id,
+                              getLikeCount(review.id, review.likes ?? 0),
+                              (n) => setLikeCounts((prev) => new Map(prev).set(review.id, n))
+                            )
+                          }
+                          disabled={!isAuthenticated || review.userId === user?.id}
+                          aria-label={isReviewLiked(review.id) ? 'Descurtir review' : 'Curtir review'}
+                        >
+                          ❤️ {getLikeCount(review.id, review.likes ?? 0)}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -332,7 +378,7 @@ export default function ProfilePage() {
                   <div className="empty-icon">📝</div>
                   <h3>Nenhuma avaliação ainda</h3>
                   <p>Compartilhe suas opiniões sobre os filmes que você assistiu!</p>
-                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar TMDB</button>
+                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar CineSync</button>
                 </div>
               )}
             </div>
@@ -473,7 +519,7 @@ export default function ProfilePage() {
                   <div className="empty-icon">❤️</div>
                   <h3>Nenhum filme curtido ainda</h3>
                   <p>Curta os filmes para eles aparecerem aqui.</p>
-                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar TMDB</button>
+                  <button className="btn-primary" onClick={() => router.push('/')}>Explorar CineSync</button>
                 </div>
               )}
             </div>

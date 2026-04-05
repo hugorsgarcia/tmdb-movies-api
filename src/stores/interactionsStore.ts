@@ -9,6 +9,15 @@ import { createLikesSlice } from './slices/likesSlice';
 import { createListsSlice } from './slices/listsSlice';
 import { MediaList } from '@/types/interactions';
 
+// DBA-003: Typed row shape for list_items join to avoid losing type safety
+interface ListItemRow {
+  media_id: number;
+  media_type: string;
+  title: string;
+  poster_path: string | null;
+  added_at: string;
+}
+
 export const useInteractionsStore = create<InteractionsState>((set, get, api) => ({
   ...createRatingsSlice(set, get, api),
   ...createWatchLogsSlice(set, get, api),
@@ -19,18 +28,19 @@ export const useInteractionsStore = create<InteractionsState>((set, get, api) =>
 
   loading: true,
 
-  loadInteractions: async (userId: string) => {
+  // DBA-004: Accept username to populate reviews with the current user's handle
+  loadInteractions: async (userId: string, username?: string) => {
     set({ loading: true });
     try {
       const [ratingsRes, watchLogsRes, reviewsRes, watchlistRes, likesRes, listsRes] =
         await Promise.all([
-          supabase.from('ratings').select('*').eq('user_id', userId),
-          supabase.from('watch_logs').select('*').eq('user_id', userId),
-          supabase.from('reviews').select('*').eq('user_id', userId),
-          supabase.from('watchlist').select('*').eq('user_id', userId),
-          supabase.from('likes').select('*').eq('user_id', userId),
-          // DBA-01: Fix for N+1 Queries
-          // We load the list items along with the lists in a single join query
+          // DBA-001: Explicit column selection — avoids over-fetching
+          supabase.from('ratings').select('id, user_id, media_id, media_type, rating, created_at, updated_at').eq('user_id', userId),
+          supabase.from('watch_logs').select('id, user_id, media_id, media_type, media_title, poster_path, watched_date, rating, review, created_at').eq('user_id', userId),
+          supabase.from('reviews').select('id, user_id, media_id, media_type, media_title, poster_path, rating, review_text, contains_spoilers, likes_count, created_at, updated_at').eq('user_id', userId),
+          supabase.from('watchlist').select('id, user_id, media_id, media_type, media_title, poster_path, added_at').eq('user_id', userId),
+          supabase.from('likes').select('id, user_id, media_id, media_type, media_title, poster_path, liked_at').eq('user_id', userId),
+          // N+1 fix: load list items in a single join query
           supabase.from('lists').select('*, list_items(*)').eq('user_id', userId),
         ]);
 
@@ -40,7 +50,7 @@ export const useInteractionsStore = create<InteractionsState>((set, get, api) =>
         name: list.name,
         description: list.description,
         userId: list.user_id,
-        movies: (list.list_items || []).map((item: any) => ({
+        movies: (list.list_items || []).map((item: ListItemRow) => ({
           mediaId: item.media_id,
           mediaType: item.media_type,
           title: item.title,
@@ -63,7 +73,7 @@ export const useInteractionsStore = create<InteractionsState>((set, get, api) =>
           rating: w.rating ? Number(w.rating) : undefined, review: w.review, createdAt: w.created_at,
         })),
         reviews: (reviewsRes.data || []).map((r) => ({
-          id: r.id, userId: r.user_id, username: '', userAvatar: undefined,
+          id: r.id, userId: r.user_id, username: username ?? '', userAvatar: undefined,
           mediaId: r.media_id, mediaType: r.media_type, mediaTitle: r.media_title,
           posterPath: r.poster_path, rating: r.rating ? Number(r.rating) : undefined,
           reviewText: r.review_text, containsSpoilers: r.contains_spoilers,

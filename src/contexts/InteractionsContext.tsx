@@ -19,7 +19,7 @@ export function InteractionsProvider({ children }: { children: ReactNode }) {
   // Sync store lifecycle with auth
   useEffect(() => {
     if (user) {
-      store.loadInteractions(user.id);
+      store.loadInteractions(user.id, user.username);
     } else {
       store.clearInteractions();
     }

@@ -77,8 +77,7 @@ export default function QuickActions({
   const watched = isAuthenticated && isWatched(mediaId, mediaType);
 
   return (
-    <>
-      <div className="quick-actions">
+    <div className="quick-actions">
         {/* Like Button */}
         <button
         className={`action-btn like-btn ${liked ? 'active' : ''}`}
@@ -126,23 +125,22 @@ export default function QuickActions({
         )}
       </button>
 
-      {/* Details Button */}
+      {/* Details Button — DEV-003: Link renders as button directly; no nested <button> inside <Link> */}
       {detailsLink && (
-        <Link href={detailsLink} className="action-btn details-btn">
-          <button
-            onMouseEnter={() => setShowTooltip('details')}
-            onMouseLeave={() => setShowTooltip(null)}
-            aria-label="Ver detalhes"
-          >
-            <FaInfoCircle />
-            {showLabels && <span>Ver mais</span>}
-            {showTooltip === 'details' && !showLabels && (
-              <span className="tooltip">Ver mais</span>
-            )}
-          </button>
+        <Link
+          href={detailsLink}
+          className="action-btn details-btn"
+          onMouseEnter={() => setShowTooltip('details')}
+          onMouseLeave={() => setShowTooltip(null)}
+          aria-label="Ver detalhes"
+        >
+          <FaInfoCircle />
+          {showLabels && <span>Ver mais</span>}
+          {showTooltip === 'details' && !showLabels && (
+            <span className="tooltip">Ver mais</span>
+          )}
         </Link>
       )}
       </div>
-    </>
   );
 }
