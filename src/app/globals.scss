@@ -5,25 +5,26 @@
 }
 
 :root {
-  // Letterboxd-inspired color palette
-  --bg-primary: #14181c;
-  --bg-secondary: #2c3440;
-  --bg-tertiary: #1c2128;
+  // CineSync color palette
+  --bg-primary: #080a10;
+  --bg-secondary: #151822;
+  --bg-tertiary: #1c1f2b;
   
-  --border-color: #456;
-  --border-color-light: #567;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-light: rgba(255, 255, 255, 0.15);
   
-  --text-primary: #fff;
-  --text-secondary: #9ab;
-  --text-tertiary: #678;
+  --text-primary: #f0f4f8;
+  --text-secondary: #a0abb8;
+  --text-tertiary: #64748b;
   
-  --accent-primary: #00c030;
-  --accent-hover: #00d435;
-  --accent-light: rgba(0, 192, 48, 0.1);
+  --accent-primary: #00f2fe;
+  --accent-hover: #4facfe;
+  --accent-light: rgba(0, 242, 254, 0.15);
+  --accent-purple: #8a2387;
   
-  --error: #ff4444;
+  --error: #ff4d4d;
   --warning: #ffc107;
-  --info: #2196f3;
+  --info: #00f2fe;
 }
 
 // A11y: Skip link for keyboard navigation
@@ -52,12 +53,16 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 a {

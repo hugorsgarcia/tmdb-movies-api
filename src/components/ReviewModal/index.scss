@@ -17,18 +17,18 @@
           width: 18px;
           height: 18px;
           cursor: pointer;
-          accent-color: #00c030;
+          accent-color: var(--accent-primary);
         }
 
         .checkbox-text {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          color: #fff;
+          color: var(--text-primary);
           font-weight: 500;
 
           .spoiler-icon {
-            color: #ffc107;
+            color: var(--warning);
             font-size: 1rem;
           }
         }
@@ -36,7 +36,7 @@
 
       .help-text {
         display: block;
-        color: #678;
+        color: var(--text-tertiary);
         font-size: 0.85rem;
         margin-top: 0.5rem;
         margin-left: 2rem;
@@ -44,12 +44,12 @@
     }
 
     .required {
-      color: #ff6b6b;
+      color: var(--error);
     }
 
     .help-text {
       display: block;
-      color: #678;
+      color: var(--text-tertiary);
       font-size: 0.85rem;
       margin-top: 0.25rem;
     }

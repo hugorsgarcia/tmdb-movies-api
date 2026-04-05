@@ -48,7 +48,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-left">
         <span className="logo" onClick={() => router.push('/')} style={{ cursor: 'pointer' }} role="button" tabIndex={0} aria-label="Ir para página inicial">
-          MyLetterboxd
+          <span className="logo-text">CineSync</span>
         </span>
         {showMediaToggle && (
           <div className="media-toggle">

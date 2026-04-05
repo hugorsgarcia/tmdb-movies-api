@@ -14,8 +14,8 @@
 }
 
 .watch-log-modal {
-  background: #14181c;
-  border: 1px solid #456;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   max-width: 500px;
   width: 100%;
@@ -30,7 +30,7 @@
     right: 1rem;
     background: transparent;
     border: none;
-    color: #9ab;
+    color: var(--text-secondary);
     font-size: 1.5rem;
     cursor: pointer;
     transition: color 0.2s;
@@ -41,22 +41,22 @@
     z-index: 10;
 
     &:hover {
-      color: #fff;
+      color: var(--text-primary);
     }
   }
 
   .modal-header {
     padding: 2rem 2rem 1rem;
-    border-bottom: 1px solid #456;
+    border-bottom: 1px solid var(--border-color);
 
     h2 {
-      color: #fff;
+      color: var(--text-primary);
       font-size: 1.5rem;
       margin-bottom: 0.5rem;
     }
 
     .media-title {
-      color: #9ab;
+      color: var(--text-secondary);
       font-size: 1rem;
     }
   }
@@ -69,7 +69,7 @@
 
       label {
         display: block;
-        color: #9ab;
+        color: var(--text-secondary);
         font-weight: 500;
         margin-bottom: 0.75rem;
         font-size: 0.95rem;
@@ -78,16 +78,16 @@
       input[type='date'] {
         width: 100%;
         padding: 0.75rem;
-        background: #2c3440;
-        border: 1px solid #456;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
-        color: #fff;
+        color: var(--text-primary);
         font-size: 1rem;
         transition: border-color 0.2s;
 
         &:focus {
           outline: none;
-          border-color: #00c030;
+          border-color: var(--accent-primary);
         }
 
         &::-webkit-calendar-picker-indicator {
@@ -99,10 +99,10 @@
       textarea {
         width: 100%;
         padding: 0.75rem;
-        background: #2c3440;
-        border: 1px solid #456;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
-        color: #fff;
+        color: var(--text-primary);
         font-size: 0.95rem;
         font-family: inherit;
         resize: vertical;
@@ -111,18 +111,18 @@
 
         &:focus {
           outline: none;
-          border-color: #00c030;
+          border-color: var(--accent-primary);
         }
 
         &::placeholder {
-          color: #678;
+          color: var(--text-tertiary);
         }
       }
 
       .char-count {
         display: block;
         text-align: right;
-        color: #678;
+        color: var(--text-tertiary);
         font-size: 0.85rem;
         margin-top: 0.25rem;
       }
@@ -130,7 +130,7 @@
       .clear-rating-btn {
         background: transparent;
         border: none;
-        color: #9ab;
+        color: var(--text-secondary);
         font-size: 0.85rem;
         cursor: pointer;
         margin-top: 0.5rem;
@@ -138,7 +138,7 @@
         transition: color 0.2s;
 
         &:hover {
-          color: #fff;
+          color: var(--text-primary);
           text-decoration: underline;
         }
       }
@@ -151,7 +151,7 @@
       gap: 1rem;
       margin-top: 2rem;
       padding-top: 1.5rem;
-      border-top: 1px solid #456;
+      border-top: 1px solid var(--border-color);
 
       .right-actions {
         display: flex;
@@ -175,8 +175,8 @@
 
       .btn-remove {
         background: transparent;
-        color: #ff6b6b;
-        border: 1px solid #ff6b6b;
+        color: var(--error);
+        border: 1px solid var(--error);
 
         &:hover:not(:disabled) {
           background: rgba(255, 107, 107, 0.1);
@@ -185,23 +185,23 @@
 
       .btn-cancel {
         background: transparent;
-        color: #9ab;
-        border: 1px solid #456;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
 
         &:hover:not(:disabled) {
-          background: #2c3440;
-          color: #fff;
+          background: var(--bg-secondary);
+          color: var(--text-primary);
         }
       }
 
       .btn-submit {
-        background: #00c030;
+        background: var(--accent-primary);
         color: white;
 
         &:hover:not(:disabled) {
-          background: #00d435;
+          background: var(--accent-hover);
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 192, 48, 0.3);
+          box-shadow: 0 4px 12px rgba(0, 242, 254, 0.3);
         }
 
         &:active:not(:disabled) {
@@ -218,15 +218,15 @@
 }
 
 .watch-log-modal::-webkit-scrollbar-track {
-  background: #14181c;
+  background: var(--bg-primary);
 }
 
 .watch-log-modal::-webkit-scrollbar-thumb {
-  background: #456;
+  background: var(--border-color);
   border-radius: 4px;
 
   &:hover {
-    background: #567;
+    background: var(--border-color-light);
   }
 }
 
