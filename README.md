@@ -1,134 +1,243 @@
-# TMDB Movies API - Next.js e Axios
+# CineSync 🎬
 
-Este é um projeto desenvolvido com [Next.js](https://nextjs.org/) para exibir filmes e séries consumindo a [API do TMDB](https://www.themoviedb.org/documentation/api).
+Uma plataforma de descoberta e acompanhamento de filmes e séries com sistema de lembretes via **WhatsApp e E-mail**.
 
-## 🚀 Funcionalidades
+> **Live Demo:** [tmdb-cine-sync.vercel.app](https://tmdb-cine-sync.vercel.app)
 
-- ✅ Listagem de filmes e séries populares usando a API do TMDB
-- ✅ Navegação entre diferentes gêneros (Ação, Comédia, Drama, etc.)
-- ✅ Alternância entre visualização de filmes e séries
-- ✅ Páginas de detalhes com informações completas (sinopse, avaliação, trailer)
-- ✅ Funcionalidade de busca por título
-- ✅ Infinite scroll para carregamento de mais conteúdo
-- ✅ Imagens otimizadas com o componente `next/image`
-- ✅ Layout responsivo e estilização com SCSS
-- ✅ Tratamento de erros com feedback visual
+---
 
-## 🛠️ Melhorias Implementadas
+## ✨ Funcionalidades
 
-### 1. **Segurança e Boas Práticas**
-- Chave da API TMDB movida para variáveis de ambiente (`.env.local`)
-- Arquivo `.env.example` criado como referência
-- Configuração centralizada da API com Axios em `src/utils/tmdb.ts`
+### 🎥 Conteúdo & Descoberta
+- Listagem de filmes e séries populares via TMDB API
+- Navegação por gêneros (Ação, Comédia, Drama, etc.)
+- Busca por título com resultados em tempo real
+- Infinite scroll para carregamento contínuo
+- Páginas de detalhes com sinopse, avaliação, trailer e **onde assistir** (streaming providers para o Brasil)
 
-### 2. **Refatoração de Componentes**
-- Unificação dos componentes `MovieCard` e `MediaCard`
-- Componente `MediaDetailsPage` reutilizável para filmes e séries
-- Hook customizado `useMediaDetails` para lógica compartilhada
-- Componente `ErrorMessage` para tratamento visual de erros
+### 👤 Perfil & Social
+- Autenticação completa (cadastro/login) com Supabase Auth
+- Avaliação de filmes e séries com sistema de estrelas
+- Escritura e edição de críticas
+- Organização de conteúdo em listas personalizadas
+- Log de visualizações com data e notas
+- Seguir outros usuários e feed de atividade
 
-### 3. **Novas Funcionalidades**
-- Sistema de busca completo com página de resultados (`/search`)
-- Melhor tratamento de erros com opção de retry
-- Feedback de loading aprimorado
+### 🔔 Sistema de Lembretes
+- Agendar lembrete para assistir um filme ou série em data e hora futura
+- Receber notificação via **WhatsApp** ou **E-mail** no horário agendado
+- A mensagem inclui o nome do conteúdo e os serviços de streaming disponíveis
+- Arquitetura extensível para adicionar novos canais (SMS, Push, etc.)
 
-### 4. **Limpeza de Código**
-- Remoção de arquivos SVG não utilizados
-- Eliminação de código duplicado
-- Melhor organização da estrutura de arquivos
+---
 
-## 📋 Pré-requisitos
+## 🏗️ Arquitetura
 
-- Node.js 18+ instalado
-- Uma chave de API do TMDB ([obtenha aqui](https://www.themoviedb.org/settings/api))
+```
+┌─────────────────────────────────────────────────────┐
+│                   Usuário (Browser)                  │
+└──────────────────┬──────────────────────────────────┘
+                   │
+          ┌────────▼────────┐
+          │  Next.js (Vercel) │  ← CineSync Frontend
+          │  /src             │
+          └────────┬─────────┘
+                   │  INSERT → notifications table
+          ┌────────▼─────────────┐
+          │    Supabase (DB)     │  ← Banco compartilhado
+          │  - profiles           │
+          │  - notifications      │  ← Fila de lembretes
+          │  - whatsapp_sessions  │  ← Sessão Baileys persistida
+          └────────┬─────────────┘
+                   │  SELECT pending (a cada 1 min)
+          ┌────────▼─────────────┐
+          │  Notifier (Render)   │  ← Microserviço de envio
+          │  Node.js + Express   │
+          │  Baileys (WhatsApp)  │
+          │  Resend (Email)      │
+          └──────────────────────┘
+```
 
-## 🔧 Como rodar o projeto
+---
 
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/seu-usuario/tmdb-movies-api.git
-   cd tmdb-movies-api
-   ```
+## 🛠️ Stack Técnica
 
-2. **Instale as dependências:**
-   ```bash
-   npm install
-   # ou
-   yarn install
-   ```
+| Camada | Tecnologia |
+|---|---|
+| Frontend | Next.js 16 (App Router), TypeScript, SCSS |
+| Auth & DB | Supabase (PostgreSQL + Auth) |
+| Estado global | Zustand |
+| Dados de filmes | TMDB API |
+| Notificações (WhatsApp) | Baileys (WebSocket) |
+| Notificações (Email) | Resend |
+| Deploy Frontend | Vercel |
+| Deploy Microserviço | Render |
 
-3. **Configure as variáveis de ambiente:**
-   - Copie o arquivo `.env.example` para `.env.local`:
-     ```bash
-     cp .env.example .env.local
-     ```
-   - Edite `.env.local` e adicione sua chave da API TMDB:
-     ```
-     NEXT_PUBLIC_TMDB_API_KEY=sua_chave_aqui
-     ```
-
-4. **Inicie o servidor de desenvolvimento:**
-   ```bash
-   npm run dev
-   # ou
-   yarn dev
-   ```
-
-5. **Acesse no navegador:**
-   ```
-   http://localhost:3000
-   ```
+---
 
 ## 📁 Estrutura do Projeto
 
 ```
-tmdb-movies-api/
+cinesync/
 ├── src/
-│   ├── app/                    # Páginas do Next.js (App Router)
-│   │   ├── movie/[id]/        # Página de detalhes do filme
-│   │   ├── tv/[id]/           # Página de detalhes da série
-│   │   ├── search/            # Página de resultados de busca
-│   │   └── page.tsx           # Página inicial
-│   ├── components/            # Componentes reutilizáveis
-│   │   ├── ErrorMessage/      # Componente de erro
-│   │   ├── Header/            # Navegação de gêneros
-│   │   ├── MediaCard/         # Card unificado de mídia
-│   │   ├── MediaDetailsPage/  # Página de detalhes reutilizável
-│   │   ├── MovieList/         # Lista com infinite scroll
-│   │   ├── Navbar/            # Barra de navegação e busca
-│   │   └── StarRating/        # Exibição de avaliação
-│   ├── hooks/                 # Custom hooks
-│   │   └── useMediaDetails.ts # Hook para detalhes de mídia
-│   ├── types/                 # TypeScript types
-│   │   ├── media.ts
-│   │   └── movie.ts
-│   └── utils/                 # Funções utilitárias
-│       └── tmdb.ts            # Configuração da API TMDB
-├── public/                    # Arquivos estáticos
-├── .env.local                 # Variáveis de ambiente (não versionado)
-├── .env.example               # Exemplo de variáveis de ambiente
-└── package.json
+│   ├── app/                    # Páginas (Next.js App Router)
+│   │   ├── api/reminders/      # Endpoint para salvar lembretes
+│   │   ├── movie/[id]/         # Detalhes de filme
+│   │   ├── tv/[id]/            # Detalhes de série
+│   │   ├── search/             # Resultados de busca
+│   │   ├── profile/[username]/ # Perfil público
+│   │   ├── feed/               # Feed social
+│   │   └── settings/           # Configurações do usuário
+│   ├── components/             # Componentes React
+│   │   ├── MediaDetailsPage/   # Página de detalhes (filmes e séries)
+│   │   ├── ReminderModal/      # Modal de agendamento de lembrete
+│   │   ├── StreamingProviders/ # Onde assistir (JustWatch via TMDB)
+│   │   ├── Navbar/             # Barra de navegação
+│   │   ├── MovieList/          # Lista com infinite scroll
+│   │   └── ...
+│   ├── stores/                 # Zustand stores
+│   ├── contexts/               # Auth e Interactions contexts
+│   ├── hooks/                  # Custom hooks
+│   ├── lib/                    # Supabase client
+│   └── utils/                  # Funções utilitárias (TMDB helpers)
+│
+├── notifier/                   # 🤖 Microserviço de Notificações
+│   ├── src/
+│   │   ├── index.ts            # Express + bootstrap
+│   │   ├── config/supabase.ts  # Client Supabase (service role)
+│   │   ├── services/
+│   │   │   ├── whatsapp.ts     # Baileys + session persistence
+│   │   │   └── email.ts        # Resend email sender
+│   │   └── workers/
+│   │       └── cronJob.ts      # Polling a cada 1 minuto
+│   ├── .env.example
+│   └── package.json
+│
+├── supabase/migrations/        # Migrations do banco de dados
+│   ├── 01_apply_rls.sql
+│   ├── ...
+│   └── 06_notifications_and_wa_sessions.sql
+│
+└── render.yaml                 # IaC para deploy no Render
 ```
 
-## 🎨 Tecnologias Utilizadas
+---
 
-- **Next.js 15** - Framework React
-- **TypeScript** - Tipagem estática
-- **Axios** - Cliente HTTP
-- **SCSS** - Estilização
-- **TMDB API** - Fonte de dados de filmes e séries
+## ⚙️ Configuração Local
 
-## 📝 Scripts Disponíveis
+### Pré-requisitos
+- Node.js 20+
+- Conta no [Supabase](https://supabase.com) (gratuito)
+- Chave da [TMDB API](https://www.themoviedb.org/settings/api) (gratuito)
 
-- `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Cria build de produção
-- `npm run start` - Inicia servidor de produção
-- `npm run lint` - Executa linter
+### 1. Clone e instale dependências
 
-## 🤝 Contribuindo
+```bash
+git clone https://github.com/hugorsgarcia/tmdb-movies-api.git
+cd tmdb-movies-api
+npm install
+```
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e pull requests.
+### 2. Configure o `.env` raiz
+
+```env
+TMDB_API_KEY=sua_chave_tmdb
+
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_xxx
+```
+
+### 3. Rode as migrations do banco
+
+Execute os arquivos em `supabase/migrations/` no **SQL Editor** do Supabase (em ordem numérica).
+
+### 4. Inicie o frontend
+
+```bash
+npm run dev
+# http://localhost:3000
+```
+
+---
+
+## 🤖 Microserviço Notifier
+
+O microserviço roda **separado** do Next.js. Ele é responsável por:
+1. Conectar ao WhatsApp via Baileys (persiste sessão no Supabase)
+2. Fazer polling na tabela `notifications` a cada 1 minuto
+3. Enviar mensagens pelos canais configurados
+
+> ⚠️ **Atenção:** Nunca rode o notifier local e o Render ao mesmo tempo com a mesma sessão — isso causará conflito de sessão WhatsApp (erro 440).
+
+### Verificar se está rodando local
+
+```powershell
+netstat -ano | findstr :3001
+# Sem output = nada rodando local (seguro usar o Render)
+```
+
+### Rodando o notifier local (desenvolvimento)
+
+```bash
+cd notifier
+# Crie um .env baseado no .env.example
+npm install
+npm run dev
+# O QR Code estará em http://localhost:3001/api/qrcode
+```
+
+### Deploy no Render
+
+O arquivo `render.yaml` na raiz já define o serviço. Configure as variáveis de ambiente no painel do Render:
+
+| Variável | Descrição |
+|---|---|
+| `SUPABASE_URL` | URL do projeto Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave `service_role` (jamais expor no frontend) |
+| `RESEND_API_KEY` | Chave da API do Resend (para emails) |
+
+Após o deploy, autentique o WhatsApp acessando:
+```
+https://seu-servico.onrender.com/api/qrcode
+```
+
+---
+
+## 🗃️ Banco de Dados (Supabase)
+
+Tabelas principais:
+
+| Tabela | Descrição |
+|---|---|
+| `profiles` | Perfis de usuário |
+| `list_items` | Filmes/séries nas listas |
+| `reviews` | Críticas escritas |
+| `review_likes` | Curtidas em críticas |
+| `follows` | Relacionamento seguir/seguidor |
+| `notifications` | Fila de lembretes agendados |
+| `whatsapp_sessions` | Chaves de sessão do Baileys (uso interno) |
+
+---
+
+## 📝 Scripts
+
+### Frontend (raiz)
+```bash
+npm run dev      # Desenvolvimento
+npm run build    # Build de produção
+npm run start    # Servidor de produção
+npm run lint     # Linter
+```
+
+### Notifier (`/notifier`)
+```bash
+npm run dev      # Desenvolvimento com hot-reload
+npm run build    # Compila TypeScript
+npm start        # Produção
+```
+
+---
 
 ## 📄 Licença
 
-Este projeto é de código aberto e está disponível sob a licença MIT.
+MIT
