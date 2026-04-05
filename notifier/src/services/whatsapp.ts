@@ -80,6 +80,7 @@ async function useSupabaseAuthState(sessionId: string): Promise<{ state: Authent
 let sock: ReturnType<typeof makeWASocket> | null = null;
 export let latestQrCode: string | null = null;
 let reconnectAttempts = 0;
+let isConnectionOpen = false; // tracks current connection state to avoid waiting when already connected
 
 // Initialize WhatsApp connection
 export async function connectToWhatsApp() {
@@ -110,8 +111,7 @@ export async function connectToWhatsApp() {
             const isConflict = statusCode === 440;
 
             if (isConflict) {
-                // Another instance connected with the same session.
-                // Stop reconnecting — this is a multi-instance conflict.
+                isConnectionOpen = false;
                 console.warn('[WhatsApp] Stream conflict (440): Another instance is using this session. Waiting 30s before retrying...');
                 setTimeout(() => {
                     reconnectAttempts = 0;
@@ -124,6 +124,7 @@ export async function connectToWhatsApp() {
                 console.log('[WhatsApp] Logged out. Wiping session...');
                 await supabase.from('whatsapp_sessions').delete().like('id', 'cinesync-%');
                 latestQrCode = null;
+                isConnectionOpen = false;
                 reconnectAttempts = 0;
                 connectToWhatsApp();
                 return;
@@ -133,10 +134,12 @@ export async function connectToWhatsApp() {
             reconnectAttempts++;
             const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 60000);
             console.log(`[WhatsApp] Connection closed (status ${statusCode}). Reconnecting in ${delay/1000}s... (attempt #${reconnectAttempts})`);
+            isConnectionOpen = false;
             setTimeout(() => connectToWhatsApp(), delay);
 
         } else if (connection === 'open') {
             reconnectAttempts = 0;
+            isConnectionOpen = true;
             console.log('[WhatsApp] Connection opened successfully!');
             latestQrCode = null;
         }
@@ -148,7 +151,13 @@ export async function connectToWhatsApp() {
 // Returns true for transient errors where the message should be retried later
 export function isRetryableError(error: any): boolean {
     const msg = error?.message || '';
-    return msg.includes('conflict') || msg.includes('Stream Errored') || msg.includes('Connection Failure');
+    return (
+        msg.includes('conflict') ||
+        msg.includes('Stream Errored') ||
+        msg.includes('Connection Failure') ||
+        msg.includes('Connection timeout') ||
+        msg.includes('timed out')
+    );
 }
 
 // Service function to send message
@@ -165,11 +174,14 @@ export async function sendWhatsAppMessage(toPhone: string, text: string): Promis
         }
         const jid = `${phone}@s.whatsapp.net`;
         
-        // Wait for connection to be active (max 10s)
-        await Promise.race([
-            sock.waitForConnectionUpdate((u) => Promise.resolve(u.connection === 'open')),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 10000))
-        ]);
+        // Only wait for connection if not already open
+        if (!isConnectionOpen) {
+            console.log('[WhatsApp] Waiting for connection to open...');
+            await Promise.race([
+                sock.waitForConnectionUpdate((u) => Promise.resolve(u.connection === 'open')),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 15000))
+            ]);
+        }
 
         // Check if number exists 
         const resultArr = await sock.onWhatsApp(jid);
