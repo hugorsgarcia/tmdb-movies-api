@@ -66,6 +66,10 @@
             font-family: var(--font-heading), sans-serif;
             font-weight: 700;
             color: #f1f5f9;
+            /* BUG-002: Explicit single-layer text-shadow prevents ghost text doubling */
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
     }
 

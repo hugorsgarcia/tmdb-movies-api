@@ -335,39 +335,11 @@
   }
 }
 
-@media (max-width: 768px) {
-  .navbar {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  .navbar-center {
-    order: 1;
-    width: 100%;
-    .search-bar {
-      width: 100%;
-    }
-  }
-  .navbar-left, .navbar-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .logo {
-    font-size: 1.5rem;
-  }
-
-  .media-toggle {
-    button {
-      padding: 0.4rem 0.8rem;
-      font-size: 0.9rem;
-    }
-  }
-
-  .auth-buttons {
-    button {
-      padding: 0.5rem 1rem;
-      font-size: 0.85rem;
-    }
-  }
+// BUG-007: Prevent media toggle from clipping on very narrow viewports
+.media-toggle {
+  flex-shrink: 0;
 }
+
+// BUG-001: Removed the old 768px breakpoint that forced flex-direction:column
+// and created a 3-line navbar. Viewports 640-768px now use the desktop row layout
+// (enough space). The 639px breakpoint above handles true mobile (2-line wrap).

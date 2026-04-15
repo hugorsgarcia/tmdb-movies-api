@@ -9,7 +9,7 @@
 .genres-list {
   display: flex;
   list-style: none;
-  padding: 0 2.5rem;
+  padding: 0 3rem; /* BUG-006: Increased from 2.5rem to prevent arrow overlap */
   margin: 0;
   overflow-x: scroll;
   -ms-overflow-style: none;  // IE and Edge
@@ -64,10 +64,16 @@
 
 .scroll-button.left {
   left: 0;
+  /* BUG-006: Gradient fade so labels dissolve under the arrow */
+  background: linear-gradient(to right, #020617 40%, transparent);
+  padding-right: 1.5rem;
 }
 
 .scroll-button.right {
   right: 0;
+  /* BUG-006: Gradient fade so labels dissolve under the arrow */
+  background: linear-gradient(to left, #020617 40%, transparent);
+  padding-left: 1.5rem;
 }
 
 @media (max-width: 768px) {
